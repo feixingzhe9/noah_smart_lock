@@ -31,6 +31,9 @@ enum
     FRAME_TYPE_RFID_UPLOAD      =  0x04,
     FRAME_TYPE_QR_CODE_UPLOAD   =  0x05,
 
+
+    FRAME_TYPE_LOCK_VERSION     =  0x20,
+
 }FRAME_TYPE_E;
 
 
@@ -254,6 +257,14 @@ typedef struct
     bool status;
 }lock_serials_stauts_t;
 
+
+typedef struct
+{
+    uint8_t lock_id;
+    std::string rfid;
+    std::string pw;
+}lock_match_t;
+
 typedef struct
 {
 #define DEV_STRING_LEN              50
@@ -330,6 +341,17 @@ class NoahPowerboard
             noah_powerboard_pub = n.advertise<std_msgs::String>("tx_noah_powerboard_node",1000);
             pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
             
+
+            lock_match_tmp.lock_id = 1;
+
+            lock_match_tmp.pw = "1234";
+            lock_match_tmp.rfid = "1002";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "5678";
+            lock_match_tmp.rfid = "4352";
+            lock_match_db.push_back(lock_match_tmp);
+            
         }
         int PowerboardParamInit(void);
         int SetLedEffect(powerboard_t *powerboard);
@@ -343,11 +365,12 @@ class NoahPowerboard
         int send_serial_data(powerboard_t *sys);
         int handle_receive_data(powerboard_t *sys);
 
-
+        std::vector<lock_match_t> lock_match_db;
 
 
 
         int unlock(powerboard_t *powerboard);  
+        int get_lock_version(powerboard_t *powerboard);
         void pub_info_to_agent(uint8_t type, std::string data);
 
     private:
@@ -359,6 +382,9 @@ class NoahPowerboard
         ros::Subscriber noah_powerboard_sub;
         json j;
         void pub_json_msg_to_app(const nlohmann::json j_msg);
+
+        lock_match_t lock_match_tmp;
+
 
 };
 int handle_receive_data(powerboard_t *sys);

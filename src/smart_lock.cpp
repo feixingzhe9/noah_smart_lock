@@ -44,9 +44,9 @@ std::vector<std::string> input_rfid;
 std::vector<std::string> input_qr_code;
 
 
+std::vector<uint8_t> to_unlock_serials;
 
-
-
+std::string lock_version;
 
 
 //extern NoahPowerboard  powerboard;
@@ -149,10 +149,10 @@ begin:
         if(err_cnt++ < COM_ERR_REPEAT_TIME)
         {
             usleep(500*1000); 
-            ROS_ERROR("Set leds effect start to resend");
+            ROS_ERROR("unlock opertion start to resend");
             goto begin; 
         }
-        ROS_ERROR("Set Leds Effecct : com error !");
+        ROS_ERROR("unlock operation : FAILED !");
     }
     else
     {
@@ -166,18 +166,18 @@ begin:
 
 
 
-int NoahPowerboard::GetVersion(powerboard_t *sys)      // done
+int NoahPowerboard::get_lock_version(powerboard_t *powerboard)
 {
     int error = -1;
-    sys->send_data_buf[0] = PROTOCOL_HEAD;
-    sys->send_data_buf[1] = 6;
-    sys->send_data_buf[2] = FRAME_TYPE_GET_VERSION;
-    sys->send_data_buf[3] = sys->get_version_type;
-    sys->send_data_buf[4] = this->CalCheckSum(sys->send_data_buf, 4);
-    sys->send_data_buf[5] = PROTOCOL_TAIL;
-    this->send_serial_data(sys);
+    powerboard->send_data_buf[0] = PROTOCOL_HEAD;
+    powerboard->send_data_buf[1] = 6;
+    powerboard->send_data_buf[2] = FRAME_TYPE_LOCK_VERSION;
+    powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
+    powerboard->send_data_buf[4] = this->CalCheckSum(powerboard->send_data_buf, 4);
+    powerboard->send_data_buf[5] = PROTOCOL_TAIL;
+    this->send_serial_data(powerboard);
     usleep(TEST_WAIT_TIME);
-    error = this->handle_receive_data(sys);
+    error = this->handle_receive_data(powerboard);
     if(error < 0)
     {
         
@@ -366,8 +366,19 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                         {
                             ROS_INFO("lock id:  %d,  status : %d",(*my_iterator).lock_id, (*my_iterator).status);
                         }
-                        break;
                     }
+                    break;
+                case FRAME_TYPE_LOCK_VERSION:
+                    {
+                        
+                        lock_version.clear();
+                        for(uint8_t i = 0; i < 4; i++)
+                        {
+                            lock_version.push_back(frame_buf[4+i]);
+                        }
+                        ROS_INFO("get lock version : %s",lock_version.data());
+                    }
+                    break;
 
 
                 default :
@@ -390,6 +401,17 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                         }
                         ROS_INFO("receive pass word: %s",pw.data());
                         input_pw.push_back(pw);
+
+                        for(std::vector<lock_match_t>::iterator it = lock_match_db.begin(); it != lock_match_db.end(); it++)
+                        {
+                            if((*it).pw == pw)
+                            {
+                                ROS_INFO("get right pass word");
+                                to_unlock_serials.clear();
+                                to_unlock_serials.push_back((*it).lock_id);
+                            }
+                        }
+                        pub_info_to_agent(3,pw);
                     }
                     break;
 
@@ -404,19 +426,29 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                         }
                         ROS_INFO("receive RFID: %s",rfid.data());
                         input_rfid.push_back(rfid);
+                        for(std::vector<lock_match_t>::iterator it = lock_match_db.begin(); it != lock_match_db.end(); it++)
+                        {
+                            if((*it).rfid == rfid)
+                            {
+                                ROS_INFO("get right pass word");
+                                to_unlock_serials.clear();
+                                to_unlock_serials.push_back((*it).lock_id);
+
+                            }
+                        }
+                        pub_info_to_agent(2,rfid);
                     }
                     break;
                 case FRAME_TYPE_QR_CODE_UPLOAD:
                     {
-                        std::string rfid;
-                        rfid.resize(4);
-                        rfid.clear();
-                        for(uint8_t i = 0; i < 4; i++)
+                        std::string qr_code;
+                        qr_code.clear();
+                        for(uint8_t i = 0; i < data_len - 5; i++)
                         {
-                            rfid.push_back(frame_buf[4+i]);
+                            qr_code.push_back(frame_buf[4+i]);
                         }
-                        ROS_INFO("receive RFID: %s",rfid.data());
-                        input_rfid.push_back(rfid);
+                        ROS_INFO("receive QR code: %s",qr_code.data());
+                        input_qr_code.push_back(qr_code);
                     }
                     break;
 
