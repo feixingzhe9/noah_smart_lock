@@ -1,0 +1,3 @@
+<launch>
+    <node name="smart_lock_node" pkg="smart_lock" type="smart_lock_node" respawn="true" output="screen"/>
+</launch>
