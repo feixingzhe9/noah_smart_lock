@@ -20,6 +20,7 @@
 #include "sstream"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#include <time.h>
 #include <smart_lock.h>
 #define TEST_WAIT_TIME     90*1000
 
@@ -35,14 +36,12 @@ powerboard_t    *sys_powerboard = &sys_powerboard_ram;
 
 
 
-
 std::vector<lock_serials_stauts_t> lock_serials_status;
 std::vector<lock_serials_stauts_t> lock_serials_status_ack;
 std::vector<lock_serials_stauts_t> lock_serials_status_input;
 std::vector<std::string> input_pw;
 std::vector<std::string> input_rfid;
 std::vector<std::string> input_qr_code;
-
 
 
 
@@ -65,7 +64,7 @@ void *uart_protocol_process(void* arg)
 {
     NoahPowerboard *pNoahPowerboard =  (NoahPowerboard*)arg; 
     pNoahPowerboard->handle_receive_data(sys_powerboard);
-    usleep(100*1000);
+    usleep(500*1000);
 }
 
 int NoahPowerboard::send_serial_data(powerboard_t *sys)
@@ -435,6 +434,65 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
     }
     return error;
 }
+
+
+
+
+void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data)
+{
+    json j;
+    time_t t;
+    static int uuid = 0;
+    struct tm *my_tm;
+    struct tm *t2;
+    char buf[128] = {0};
+    my_tm = localtime(&t);
+    //sprintf(buf, "%04d-%02d-%02d  %02d:%02d:%02d", my_tm->tm_year + 1900, my_tm->tm_mon + 1, my_tm->tm_mday, my_tm->tm_hour, my_tm->tm_min, my_tm->tm_sec);
+    sprintf(buf, "%04d%02d%02d  %02d:%02d:%02d", my_tm->tm_year + 1900, my_tm->tm_mon + 1, my_tm->tm_mday, my_tm->tm_hour, my_tm->tm_min, my_tm->tm_sec);
+    ROS_INFO("%s\n", buf);              
+    //ROS_INFO("%s\n", asctime(t2));              
+    //pub_to_agent
+    uuid++;
+    j.clear();
+    j =
+    {
+        {"uuid",uuid},
+        {"sub_name","smart_lock_notice"},
+
+        {
+            "data",
+            {
+                {"type", type},
+
+                {"data",data.data()},
+                {"time", buf},
+            }
+        }
+
+    };
+
+    std_msgs::String pub_json_msg;
+    std::stringstream ss;
+    ss.clear();
+    ss << j;
+    pub_json_msg.data = ss.str();
+    for(uint8_t i = 0; i < 10; i++)
+    {
+        pub_to_agent.publish(pub_json_msg);
+        usleep(20*1000);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "noah_powerboard_node");
     //NoahPowerboard  powerboard;
     NoahPowerboard *powerboard = new NoahPowerboard();
-    ros::Rate loop_rate(100);
+    ros::Rate loop_rate(5);
     uint32_t cnt = 0;
     powerboard->PowerboardParamInit();
 
@@ -51,6 +51,7 @@ int main(int argc, char **argv)
     {
         cnt++;
         powerboard->handle_receive_data(sys_powerboard);
+        powerboard->pub_info_to_agent(1,"test");
         if(cnt % 200 == 50)
         {
             

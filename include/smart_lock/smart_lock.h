@@ -348,6 +348,7 @@ class NoahPowerboard
 
 
         int unlock(powerboard_t *powerboard);  
+        void pub_info_to_agent(uint8_t type, std::string data);
 
     private:
         uint8_t CalCheckSum(uint8_t *data, uint8_t len);
