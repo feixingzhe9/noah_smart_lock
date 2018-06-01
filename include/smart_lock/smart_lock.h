@@ -22,7 +22,16 @@ using json = nlohmann::json;
 #define FRAME_TYPE_GET_CURRENT          0x0a
 #define FRAME_TYPE_GET_VERSION          0x0e
 
-#define FRAME_TYPE_UNLOCK               0x01
+
+enum
+{
+    FRAME_TYPE_UNLOCK           =  0x01,
+    FRAME_TYPE_LOCK_STATUS      =  0x02,
+    FRAME_TYPE_PW_UPLOAD        =  0x03,
+    FRAME_TYPE_RFID_UPLOAD      =  0x04,
+    FRAME_TYPE_QR_CODE_UPLOAD   =  0x05,
+
+}FRAME_TYPE_E;
 
 
 
@@ -319,12 +328,7 @@ class NoahPowerboard
         NoahPowerboard()
         {
             noah_powerboard_pub = n.advertise<std_msgs::String>("tx_noah_powerboard_node",1000);
-            pub_charge_status_to_move_base = n.advertise<std_msgs::UInt8MultiArray>("charge_status_to_move_base",1000);
-            resp_navigation_camera_leds = n.advertise<std_msgs::String>("resp_lane_follower_node/camera_using_n",1000);
-            power_pub_to_app = n.advertise<std_msgs::UInt8MultiArray>("app_sub_power",1);
-            power_sub_from_app = n.subscribe("app_pub_power",1000,&NoahPowerboard::power_from_app_rcv_callback,this);
-            noah_powerboard_sub = n.subscribe("rx_noah_powerboard_node",1000,&NoahPowerboard::from_app_rcv_callback,this);
-            sub_navigation_camera_leds = n.subscribe("lane_follower_node/camera_using_n",1000,&NoahPowerboard::from_navigation_rcv_callback,this);
+            pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
             
         }
         int PowerboardParamInit(void);
@@ -344,23 +348,14 @@ class NoahPowerboard
 
 
         int unlock(powerboard_t *powerboard);  
-        void from_app_rcv_callback(const std_msgs::String::ConstPtr &msg);
-        void from_navigation_rcv_callback(const std_msgs::String::ConstPtr &msg);
-        void power_from_app_rcv_callback(std_msgs::UInt8MultiArray data);
-        void PubPower(void);
-        void PubChargeStatus(uint8_t status);
 
     private:
         uint8_t CalCheckSum(uint8_t *data, uint8_t len);
         int handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf);
         ros::NodeHandle n;
         ros::Publisher noah_powerboard_pub;
+        ros::Publisher pub_to_agent;
         ros::Subscriber noah_powerboard_sub;
-        ros::Subscriber sub_navigation_camera_leds;
-        ros::Publisher resp_navigation_camera_leds;
-        ros::Publisher power_pub_to_app;
-        ros::Subscriber power_sub_from_app;
-        ros::Publisher pub_charge_status_to_move_base;
         json j;
         void pub_json_msg_to_app(const nlohmann::json j_msg);
 

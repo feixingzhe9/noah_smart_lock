@@ -56,59 +56,13 @@ int main(int argc, char **argv)
             
 #if 1   //Get battery info test function
             sys_powerboard->bat_info.cmd = 2; 
-            powerboard->GetBatteryInfo(sys_powerboard);
 #endif
         }
         if(cnt % 200 == 150)
         {
-#if 1  //Get system status
-            powerboard->GetSysStatus(sys_powerboard);
-#endif
         }
-        //powerboard.handle_receive_data(sys_powerboard);
 
-#if 0   //Get version test function
-        {
-            static uint8_t i = 0;
-            i++;
-            //if(i%2)
-            {
-                sys_powerboard->get_version_type = VERSION_TYPE_FW;
-            }
-            //else
-            {
-                //sys_powerboard->get_version_type = VERSION_TYPE_PROTOCOL;
-            }
-            powerboard.GetVersion(sys_powerboard);
-        }
-#endif
 
-#if 0   //Infrared LED ctrl test funcion
-
-        //sys_powerboard->ir_cmd.cmd = IR_CMD_READ;
-        sys_powerboard->ir_cmd.cmd = IR_CMD_WRITE;
-        sys_powerboard->ir_cmd.set_ir_percent = 75;
-        powerboard.InfraredLedCtrl(sys_powerboard);
-#endif 
-#if 0
-        {
-            static uint16_t cnt = 0;
-            cnt++;
-            if(cnt % 10 > 4)
-            {
-                sys_powerboard->module_status_set.on_off = MODULE_CTRL_OFF; 
-            }
-            else
-            {
-                sys_powerboard->module_status_set.on_off = MODULE_CTRL_ON;
-            }
-            sys_powerboard->module_status_set.module = POWER_24V_PRINTER; 
-            powerboard.SetModulePowerOnOff(sys_powerboard);
-        }
-#endif
-#if 0
-        powerboard.GetModulePowerOnOff(sys_powerboard);
-#endif
         ros::spinOnce();
         loop_rate.sleep();
     }
