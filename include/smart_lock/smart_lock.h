@@ -344,12 +344,12 @@ class NoahPowerboard
 
             lock_match_tmp.lock_id = 1;
 
-            lock_match_tmp.pw = "1234";
+            lock_match_tmp.pw = "8888";
             lock_match_tmp.rfid = "1002";
             lock_match_db.push_back(lock_match_tmp);
 
-            lock_match_tmp.pw = "5678";
-            lock_match_tmp.rfid = "4352";
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "ID:F";
             lock_match_db.push_back(lock_match_tmp);
             
         }
@@ -371,7 +371,7 @@ class NoahPowerboard
 
         int unlock(powerboard_t *powerboard);  
         int get_lock_version(powerboard_t *powerboard);
-        void pub_info_to_agent(uint8_t type, std::string data);
+        void pub_info_to_agent(uint8_t type, std::string data, uint8_t status);
 
     private:
         uint8_t CalCheckSum(uint8_t *data, uint8_t len);
