@@ -429,7 +429,7 @@ ROS_INFO("data_len : %d",data_len);
                 case FRAME_TYPE_PW_UPLOAD:
                     {
                         std::string pw;
-			uint8_t status = 0;
+			uint8_t status = 1;
                         pw.resize(4);
                         pw.clear();
                         for(uint8_t i = 0; i < 4; i++)
@@ -448,7 +448,7 @@ ROS_INFO("data_len : %d",data_len);
                                 //ROS_ERROR("get right pass word");
                                 to_unlock_serials.clear();
                                 to_unlock_serials.push_back((*it).lock_id);
-				status = 1;
+				status = 0;
                             }
                         }
                         pub_info_to_agent(3,pw ,status);
@@ -458,7 +458,7 @@ ROS_INFO("data_len : %d",data_len);
                 case FRAME_TYPE_RFID_UPLOAD:
                     {
                         std::string rfid;
-			uint8_t status = 0;
+			uint8_t status = 1;
                         rfid.resize(4);
                         rfid.clear();
                         for(uint8_t i = 0; i < 4; i++)
@@ -474,7 +474,7 @@ ROS_INFO("data_len : %d",data_len);
                                 ROS_INFO("get right pass word");
                                 to_unlock_serials.clear();
                                 to_unlock_serials.push_back((*it).lock_id);
-				status = 1;
+				status = 0;
 
                             }
                         }
@@ -492,7 +492,7 @@ ROS_INFO("data_len : %d",data_len);
                         //ROS_INFO("receive QR code: %s",qr_code.data());
                         ROS_ERROR("receive QR code: %s",qr_code.data());
                         input_qr_code.push_back(qr_code);
-                        pub_info_to_agent(1,qr_code,1);
+                        pub_info_to_agent(1,qr_code,0);
                     }
                     break;
 
@@ -546,7 +546,7 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
                 {"type", type},
 
                 {"code",data.data()},
-                {"time", t},
+                {"time", t * 1000},
                 {"result", status},
             }
         }
