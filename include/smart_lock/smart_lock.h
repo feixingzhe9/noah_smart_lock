@@ -6,7 +6,7 @@ using json = nlohmann::json;
 #define LED_H
 
 
-#define PROTOCOL_HEAD               0x5a
+#define PROTOCOL_HEAD               0xcc
 #define PROTOCOL_TAIL               0xa5
 #define POWER_CURRENT_LEN           33
 
@@ -251,6 +251,20 @@ typedef struct
 }ir_cmd_t;
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 typedef struct
 {
     uint8_t lock_id;
@@ -264,6 +278,33 @@ typedef struct
     std::string rfid;
     std::string pw;
 }lock_match_t;
+
+typedef struct
+{
+	uint8_t type;
+	std::string code;
+	uint8_t result;
+}pub_to_agent_t;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 typedef struct
 {
@@ -389,6 +430,7 @@ class NoahPowerboard
 };
 int handle_receive_data(powerboard_t *sys);
 void *uart_protocol_process(void* arg);
+void *agent_protocol_process(void* arg);
 void set_speed(int fd, int speed);
 int set_parity(int fd,int databits,int stopbits,int parity);
 int open_com_device(char *dev);
