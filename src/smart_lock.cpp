@@ -54,7 +54,6 @@ std::vector<std::string> input_rfid;
 std::vector<std::string> input_qr_code;
 
 
-std::vector<uint8_t> to_unlock_serials;
 
 std::string lock_version;
 
@@ -62,7 +61,8 @@ std::string lock_version;
 
 
 std::vector<pub_to_agent_t> pub_to_agent_vector;	//boost::mutex::scoped_lock()
-std::vector<uint8_t> lock_serials_vector;	//boost::mutex::scoped_lock()
+//std::vector<uint8_t> lock_serials_vector;	//boost::mutex::scoped_lock()
+std::vector<uint8_t> to_unlock_serials;     //boost::mutex::scoped_lock()
 
 void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t status)
 {
@@ -73,17 +73,17 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
     struct tm *t2;
     char buf[128] = {0};
 #if 0
-	time(&t);
+    time(&t);
 
-	t2 =    localtime(&t);
+    t2 =    localtime(&t);
     sprintf(buf, "%04d%02d%02d  %02d:%02d:%02d", t2->tm_year + 1900, t2->tm_mon + 1, t2->tm_mday, t2->tm_hour, t2->tm_min, t2->tm_sec);
     ROS_INFO("%s\n", buf);              
 #else
-	time(&t);
+    time(&t);
 
 #endif
     uuid++;
-	std::string uuid_str = std::to_string(uuid);
+    std::string uuid_str = std::to_string(uuid);
     j.clear();
     j =
     {
@@ -112,7 +112,7 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
     {
         pub_to_agent.publish(pub_json_msg);
         //usleep(2000*1000);
-	sleep(1);
+        sleep(1);
     }
 }
 //extern NoahPowerboard  powerboard;
@@ -131,60 +131,73 @@ int NoahPowerboard::PowerboardParamInit(void)
 void *uart_protocol_process(void* arg)
 {
     NoahPowerboard *pNoahPowerboard =  (NoahPowerboard*)arg; 
-	while(1)
-	{
+    #if 0
+    sys_powerboard->device = open_com_device(sys_powerboard->dev);
+    if(sys_powerboard->device < 0 )
+    {
+        ROS_ERROR("Open %s Failed !",sys_powerboard->dev);
+    }
+    else
+    {
+        set_speed(sys_powerboard->device,9600);
+        set_parity(sys_powerboard->device,8,1,'N');  
+        ROS_INFO("Open %s OK.",sys_powerboard->dev);
+    }
+#endif
+    while(1)
+    {
 
-		pNoahPowerboard->handle_receive_data(sys_powerboard);
-		do
-		{
-			boost::mutex::scoped_lock(mtx_smart_lock);
-			if(!lock_serials_vector.empty())
-			{
-				//auto a = lock_serials_vector.begin();
-				
-				for(std::vector<uint8_t>::iterator it = lock_serials_vector.begin(); it != lock_serials_vector.end(); it++)
-				{
-					
-				}
-			}
-		}while(0);
-		usleep(100*1000);
-	}
+        pNoahPowerboard->handle_receive_data(sys_powerboard);
+        do
+        {
+            boost::mutex::scoped_lock(mtx_smart_lock);
+            if(!to_unlock_serials.empty())
+            {
+                //auto a = lock_serials_vector.begin();
+
+                for(std::vector<uint8_t>::iterator it = to_unlock_serials.begin(); it != to_unlock_serials.end(); it++)
+                {
+                    pNoahPowerboard->unlock(sys_powerboard);                    
+                }
+            }
+        }while(0);
+        usleep(100*1000);
+    }
 }
 
 void *agent_protocol_process(void* arg)
 {
     NoahPowerboard *pNoahPowerboard =  (NoahPowerboard*)arg; 
-	while(1)
-	{
-		uint8_t type;
-		uint8_t result;
-		std::string code;
-		bool is_need_to_pub = false;
-		do
-		{
-			boost::mutex::scoped_lock(mtx_agent);
-			if(!pub_to_agent_vector.empty())
-			{
-				auto a = pub_to_agent_vector.begin();
-				type = (*a).type;
-				result =(*a).result;
-				code = (*a).code;
-				if((type > 0) && (type < 4))
-				{
-					pub_to_agent_vector.erase(a);
-					is_need_to_pub = true;
-				}
-			}
-		}
-		while(0);
-		if(is_need_to_pub == true)
-		{
-			pNoahPowerboard->pub_info_to_agent(type, code, result);
-		}
+    while(1)
+    {
+        uint8_t type;
+        uint8_t result;
+        std::string code;
+        bool is_need_to_pub = false;
+        do
+        {
+            boost::mutex::scoped_lock(mtx_agent);
+            if(!pub_to_agent_vector.empty())
+            {
+                auto a = pub_to_agent_vector.begin();
+                type = (*a).type;
+                result =(*a).result;
+                code = (*a).code;
+                if((type > 0) && (type < 4))
+                {
+                    pub_to_agent_vector.erase(a);
+                    is_need_to_pub = true;
+                }
+            }
+        }
+        while(0);
+        if(is_need_to_pub == true)
+        {
+            pNoahPowerboard->pub_info_to_agent(type, code, result);
+        }
 
-		usleep(100*1000);
-	}
+        usleep(100*1000);
+    }
 }
 
 int NoahPowerboard::send_serial_data(powerboard_t *sys)
@@ -247,25 +260,39 @@ int NoahPowerboard::unlock(powerboard_t *powerboard)     // done
 begin:
     static uint8_t err_cnt = 0;
 
-    uint8_t lock_num = powerboard->lock_serials.size();
+    uint8_t lock_num = 1;
     int error = -1;
-    powerboard->send_data_buf[0] = PROTOCOL_HEAD;
+#if 0
+    do
+    {
+        boost::mutex::scoped_lock(tmx_smart_lock);
+        lock_num = to_unlock_serials.size();
+        powerboard->send_data_buf[0] = PROTOCOL_HEAD;
+        powerboard->send_data_buf[1] = lock_num + 6;
+        powerboard->send_data_buf[2] = FRAME_TYPE_UNLOCK;
+        powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
+        for(uint8_t i = 0; i < lock_num; i++)
+        {
+            powerboard->send_data_buf[4 + i]  = to_unlock_serials[i];
+        }
+        to_unlock_serials.clear();
+    }while(0);
+#else
+
+    powerboard->send_data_buf[0] = 0x5A;
     powerboard->send_data_buf[1] = lock_num + 6;
     powerboard->send_data_buf[2] = FRAME_TYPE_UNLOCK;
     powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
+    powerboard->send_data_buf[4]  = 1;
 
-    //for(std::vector<uint8_t>::iterator my_iterator = powerboard->lock_serials.begin() ; my_iterator != powerboard->lock_serials.end(); my_iterator++)
-    for(uint8_t i = 0; i < lock_num; i++)
-    {
-        powerboard->send_data_buf[4 + i]  = powerboard->lock_serials[i];
-    }
+#endif
     powerboard->send_data_buf[lock_num + 4] = this->CalCheckSum(powerboard->send_data_buf, lock_num + 4);
     powerboard->send_data_buf[lock_num + 5] = PROTOCOL_TAIL;
     this->send_serial_data(powerboard);
     usleep(TEST_WAIT_TIME);
     if((error = this->handle_receive_data(powerboard)) < 0)
     {
-        
+
         if(err_cnt++ < COM_ERR_REPEAT_TIME)
         {
             usleep(500*1000); 
@@ -301,7 +328,7 @@ int NoahPowerboard::get_lock_version(powerboard_t *powerboard)
     error = this->handle_receive_data(powerboard);
     if(error < 0)
     {
-        
+
     }
     return error;
 }
@@ -320,7 +347,7 @@ int NoahPowerboard::get_lock_version(powerboard_t *powerboard)
     error = this->handle_receive_data(powerboard);
     if(error < 0)
     {
-        
+
     }
     return error;
 }
@@ -367,22 +394,22 @@ int NoahPowerboard::handle_receive_data(powerboard_t *sys)
             {
 
                 //frame_len = recv_buf_complete[i+1]; 
-		if(recv_buf_complete[i+1] != 0xcc)
-		{
-			frame_len = recv_buf_complete[i+1] - 1; 
-		}
-		ROS_WARN("frame len is : %d",frame_len);
+                if(recv_buf_complete[i+1] != 0xcc)
+                {
+                    frame_len = recv_buf_complete[i+1] - 1; 
+                }
+                ROS_WARN("frame len is : %d",frame_len);
                 if(i+frame_len <= data_Len)
                 {
                     if(0xA5 == recv_buf_complete[i+frame_len-1])
-                    //if(0xA5 == recv_buf_complete[i+frame_len-2])
+                        //if(0xA5 == recv_buf_complete[i+frame_len-2])
                     {
                         for(j=0;j<frame_len;j++)
                         {
                             recv_buf_temp[j] = recv_buf_complete[i+j];
                             PowerboardInfo("rcv buf %d is %2x",j, recv_buf_temp[j]);
                         }
-			ROS_INFO("get one frame");
+                        ROS_INFO("get one frame");
                         error = this->handle_rev_frame(sys,recv_buf_temp);
                         i = i+ frame_len;
                     }
@@ -429,7 +456,7 @@ void NoahPowerboard::pub_json_msg_to_app( const nlohmann::json j_msg)
     pub_json_msg.data = ss.str();
     this->noah_powerboard_pub.publish(pub_json_msg);
 }
-         
+
 int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf)
 {
     int frame_len = 0;
@@ -454,17 +481,17 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
         //return -1;
     }
     PowerboardInfo("Powrboard recieve data check OK.");
-	
+
     cmd_type = frame_buf[2];
     data_direction = frame_buf[3];
     data_len = frame_buf[1];
-ROS_INFO("cmd_type : %d",cmd_type);
-ROS_INFO("direction : %d",data_direction);
-ROS_INFO("data_len : %d",data_len);
+    ROS_INFO("cmd_type : %d",cmd_type);
+    ROS_INFO("direction : %d",data_direction);
+    ROS_INFO("data_len : %d",data_len);
     switch(data_direction)
     {
         //case DATA_DIRECTION_X86_TO_LOCK:
-            //break;
+        //break;
         case DATA_DIRECTION_LOCK_ACK:
             switch(cmd_type)
             {
@@ -519,7 +546,7 @@ ROS_INFO("data_len : %d",data_len);
                     break;
                 case FRAME_TYPE_LOCK_VERSION:
                     {
-                        
+
                         lock_version.clear();
                         for(uint8_t i = 0; i < 4; i++)
                         {
@@ -534,7 +561,7 @@ ROS_INFO("data_len : %d",data_len);
                     break;
 
             }
-            
+
             break; 
         case DATA_DIRECTION_LOCK_TO_X86:
             switch(cmd_type)
@@ -542,7 +569,7 @@ ROS_INFO("data_len : %d",data_len);
                 case FRAME_TYPE_PW_UPLOAD:
                     {
                         std::string pw;
-			uint8_t status = 1;
+                        uint8_t status = 1;
                         pw.resize(4);
                         pw.clear();
                         for(uint8_t i = 0; i < 4; i++)
@@ -559,32 +586,33 @@ ROS_INFO("data_len : %d",data_len);
                             {
                                 ROS_INFO("get right pass word");
                                 //ROS_ERROR("get right pass word");
-				do
-				{
-					boost::mutex::scoped_lock(tmx_smart_lock);
-					to_unlock_serials.clear();
-					to_unlock_serials.push_back((*it).lock_id);
-				}while(0);
-				status = 0;
+                                do
+                                {
+                                    boost::mutex::scoped_lock(tmx_smart_lock);
+                                    to_unlock_serials.clear();
+                                    //to_unlock_serials.push_back((*it).lock_id);
+                                    to_unlock_serials.push_back((*it).lock_id);
+                                }while(0);
+                                status = 0;
                             }
                         }
                         //pub_info_to_agent(3,pw ,status);
-			pub_to_agent_t tmp;
-			tmp.type = 3;
-			tmp.code = pw;
-			tmp.result = status;
-			do
-			{
-				boost::mutex::scoped_lock(mtx_agent);
-				pub_to_agent_vector.push_back(tmp);
-			}while(0);
+                        pub_to_agent_t tmp;
+                        tmp.type = 3;
+                        tmp.code = pw;
+                        tmp.result = status;
+                        do
+                        {
+                            boost::mutex::scoped_lock(mtx_agent);
+                            pub_to_agent_vector.push_back(tmp);
+                        }while(0);
                     }
                     break;
 
                 case FRAME_TYPE_RFID_UPLOAD:
                     {
                         std::string rfid;
-			uint8_t status = 1;
+                        uint8_t status = 1;
                         rfid.resize(4);
                         rfid.clear();
                         for(uint8_t i = 0; i < 4; i++)
@@ -600,25 +628,26 @@ ROS_INFO("data_len : %d",data_len);
                                 ROS_INFO("get right pass word");
                                 to_unlock_serials.clear();
                                 to_unlock_serials.push_back((*it).lock_id);
-				status = 0;
-				do
-				{
-					boost::mutex::scoped_lock(mtx_smart_lock);
-					lock_serials_vector.push_back(1);	//test code : we have only ONE lock now
-				}while(0);
+                                status = 0;
+                                do
+                                {
+                                    boost::mutex::scoped_lock(tmx_smart_lock);
+                                    to_unlock_serials.clear();
+                                    to_unlock_serials.push_back((*it).lock_id);
+                                }while(0);
 
                             }
                         }
                         //pub_info_to_agent(2,rfid, status);
-			pub_to_agent_t tmp;
-			tmp.type = 2;
-			tmp.code = rfid;
-			tmp.result = status;
-			do
-			{
-				boost::mutex::scoped_lock(mtx_agent);
-				pub_to_agent_vector.push_back(tmp);
-			}while(0);
+                        pub_to_agent_t tmp;
+                        tmp.type = 2;
+                        tmp.code = rfid;
+                        tmp.result = status;
+                        do
+                        {
+                            boost::mutex::scoped_lock(mtx_agent);
+                            pub_to_agent_vector.push_back(tmp);
+                        }while(0);
                     }
                     break;
                 case FRAME_TYPE_QR_CODE_UPLOAD:
@@ -633,15 +662,15 @@ ROS_INFO("data_len : %d",data_len);
                         ROS_ERROR("receive QR code: %s",qr_code.data());
                         input_qr_code.push_back(qr_code);
                         //pub_info_to_agent(1,qr_code,0);
-			pub_to_agent_t tmp;
-			tmp.type = 1;
-			tmp.code = qr_code;
-			tmp.result = 0;
-			do
-			{
-				boost::mutex::scoped_lock(mtx_agent);
-				pub_to_agent_vector.push_back(tmp);
-			}while(0);
+                        pub_to_agent_t tmp;
+                        tmp.type = 1;
+                        tmp.code = qr_code;
+                        tmp.result = 0;
+                        do
+                        {
+                            boost::mutex::scoped_lock(mtx_agent);
+                            pub_to_agent_vector.push_back(tmp);
+                        }while(0);
                     }
                     break;
 

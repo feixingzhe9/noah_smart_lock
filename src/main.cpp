@@ -30,11 +30,7 @@ int main(int argc, char **argv)
     uint32_t cnt = 0;
     powerboard->PowerboardParamInit();
 
-    pthread_t can_protocol_proc_handle;
-    pthread_t agent_protocol_proc_handle;
-    pthread_create(&can_protocol_proc_handle, NULL, uart_protocol_process,(void*)powerboard);
-    pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)powerboard);
-
+#if 1
     sys_powerboard->device = open_com_device(sys_powerboard->dev);
     if(sys_powerboard->device < 0 )
     {
@@ -46,6 +42,11 @@ int main(int argc, char **argv)
         set_parity(sys_powerboard->device,8,1,'N');  
         ROS_INFO("Open %s OK.",sys_powerboard->dev);
     }
+#endif
+    pthread_t can_protocol_proc_handle;
+    pthread_t agent_protocol_proc_handle;
+    pthread_create(&can_protocol_proc_handle, NULL, uart_protocol_process,(void*)powerboard);
+    pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)powerboard);
     signal(SIGINT, sigintHandler);
 
 //    powerboard.handle_receive_data(sys_powerboard);
@@ -53,7 +54,7 @@ int main(int argc, char **argv)
     {
         cnt++;
         //powerboard->handle_receive_data(sys_powerboard);//test 
-        //powerboard->unlock(sys_powerboard);//test 
+        powerboard->unlock(sys_powerboard);//test 
         //powerboard->get_lock_version(sys_powerboard);//test 
         //powerboard->pub_info_to_agent(1,"test");//test
         if(cnt % 200 == 50)
