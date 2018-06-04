@@ -391,6 +391,8 @@ class NoahPowerboard
 
             lock_match_tmp.pw = "4352";
             lock_match_tmp.rfid = "ID:F";
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "ID:E";
             lock_match_db.push_back(lock_match_tmp);
             
         }

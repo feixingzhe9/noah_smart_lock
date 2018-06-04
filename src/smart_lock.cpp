@@ -34,7 +34,8 @@
 
 
 
-boost::mutex mtx;
+boost::mutex mtx_agent;
+boost::mutex mtx_smart_lock;
 static int led_over_time_flag = 0;
 static int last_unread_bytes = 0;
 static unsigned char recv_buf_last[BUF_LEN] = {0};
@@ -60,7 +61,8 @@ std::string lock_version;
 
 
 
-std::vector<pub_to_agent_t> pub_to_agent_vector;
+std::vector<pub_to_agent_t> pub_to_agent_vector;	//boost::mutex::scoped_lock()
+std::vector<uint8_t> lock_serials_vector;	//boost::mutex::scoped_lock()
 
 void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t status)
 {
@@ -106,7 +108,7 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
     ss.clear();
     ss << j;
     pub_json_msg.data = ss.str();
-    for(uint8_t i = 0; i < 5; i++)
+    for(uint8_t i = 0; i < 2; i++)
     {
         pub_to_agent.publish(pub_json_msg);
         //usleep(2000*1000);
@@ -133,6 +135,19 @@ void *uart_protocol_process(void* arg)
 	{
 
 		pNoahPowerboard->handle_receive_data(sys_powerboard);
+		do
+		{
+			boost::mutex::scoped_lock(mtx_smart_lock);
+			if(!lock_serials_vector.empty())
+			{
+				//auto a = lock_serials_vector.begin();
+				
+				for(std::vector<uint8_t>::iterator it = lock_serials_vector.begin(); it != lock_serials_vector.end(); it++)
+				{
+					
+				}
+			}
+		}while(0);
 		usleep(100*1000);
 	}
 }
@@ -148,7 +163,7 @@ void *agent_protocol_process(void* arg)
 		bool is_need_to_pub = false;
 		do
 		{
-			boost::mutex::scoped_lock(mtx);
+			boost::mutex::scoped_lock(mtx_agent);
 			if(!pub_to_agent_vector.empty())
 			{
 				auto a = pub_to_agent_vector.begin();
@@ -544,8 +559,12 @@ ROS_INFO("data_len : %d",data_len);
                             {
                                 ROS_INFO("get right pass word");
                                 //ROS_ERROR("get right pass word");
-                                to_unlock_serials.clear();
-                                to_unlock_serials.push_back((*it).lock_id);
+				do
+				{
+					boost::mutex::scoped_lock(tmx_smart_lock);
+					to_unlock_serials.clear();
+					to_unlock_serials.push_back((*it).lock_id);
+				}while(0);
 				status = 0;
                             }
                         }
@@ -556,7 +575,7 @@ ROS_INFO("data_len : %d",data_len);
 			tmp.result = status;
 			do
 			{
-				boost::mutex::scoped_lock(mtx);
+				boost::mutex::scoped_lock(mtx_agent);
 				pub_to_agent_vector.push_back(tmp);
 			}while(0);
                     }
@@ -582,6 +601,11 @@ ROS_INFO("data_len : %d",data_len);
                                 to_unlock_serials.clear();
                                 to_unlock_serials.push_back((*it).lock_id);
 				status = 0;
+				do
+				{
+					boost::mutex::scoped_lock(mtx_smart_lock);
+					lock_serials_vector.push_back(1);	//test code : we have only ONE lock now
+				}while(0);
 
                             }
                         }
@@ -592,7 +616,7 @@ ROS_INFO("data_len : %d",data_len);
 			tmp.result = status;
 			do
 			{
-				boost::mutex::scoped_lock(mtx);
+				boost::mutex::scoped_lock(mtx_agent);
 				pub_to_agent_vector.push_back(tmp);
 			}while(0);
                     }
@@ -615,7 +639,7 @@ ROS_INFO("data_len : %d",data_len);
 			tmp.result = 0;
 			do
 			{
-				boost::mutex::scoped_lock(mtx);
+				boost::mutex::scoped_lock(mtx_agent);
 				pub_to_agent_vector.push_back(tmp);
 			}while(0);
                     }
