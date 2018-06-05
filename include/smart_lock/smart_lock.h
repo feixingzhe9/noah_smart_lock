@@ -389,11 +389,68 @@ class NoahPowerboard
             lock_match_tmp.rfid = "1002";
             lock_match_db.push_back(lock_match_tmp);
 
-            lock_match_tmp.pw = "4352";
-            lock_match_tmp.rfid = "ID:F";
-            lock_match_tmp.pw = "4352";
-            lock_match_tmp.rfid = "ID:E";
+
+            lock_match_tmp.pw = "1234";
+            lock_match_tmp.rfid = "1041";
             lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1042";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1043";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1044";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.rfid = "1045";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1046";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1047";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1048";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1049";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1050";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1051";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1052";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1053";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1054";
+            lock_match_db.push_back(lock_match_tmp);
+
+            lock_match_tmp.pw = "4352";
+            lock_match_tmp.rfid = "1055";
+            lock_match_db.push_back(lock_match_tmp);
+
+
+
             
         }
         int PowerboardParamInit(void);

@@ -35,7 +35,7 @@
 
 
 boost::mutex mtx_agent;
-boost::mutex mtx_smart_lock;
+//boost::mutex mtx_smart_lock;
 static int led_over_time_flag = 0;
 static int last_unread_bytes = 0;
 static unsigned char recv_buf_last[BUF_LEN] = {0};
@@ -108,7 +108,7 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
     ss.clear();
     ss << j;
     pub_json_msg.data = ss.str();
-    for(uint8_t i = 0; i < 2; i++)
+    for(uint8_t i = 0; i < 3; i++)
     {
         pub_to_agent.publish(pub_json_msg);
         //usleep(2000*1000);
@@ -146,19 +146,16 @@ void *uart_protocol_process(void* arg)
 #endif
     while(1)
     {
+		pNoahPowerboard->handle_receive_data(sys_powerboard);
 
-        pNoahPowerboard->handle_receive_data(sys_powerboard);
         do
         {
-            boost::mutex::scoped_lock(mtx_smart_lock);
+            //boost::mutex::scoped_lock(mtx_smart_lock);
             if(!to_unlock_serials.empty())
             {
-                //auto a = lock_serials_vector.begin();
 
-                for(std::vector<uint8_t>::iterator it = to_unlock_serials.begin(); it != to_unlock_serials.end(); it++)
-                {
-                    pNoahPowerboard->unlock(sys_powerboard);                    
-                }
+		    usleep(100*1000);
+		    pNoahPowerboard->unlock(sys_powerboard);                    
             }
         }while(0);
         usleep(100*1000);
@@ -262,6 +259,7 @@ begin:
 
     uint8_t lock_num = 1;
     int error = -1;
+ROS_WARN("start to unlock ...");
 #if 0
     do
     {
@@ -288,9 +286,13 @@ begin:
 #endif
     powerboard->send_data_buf[lock_num + 4] = this->CalCheckSum(powerboard->send_data_buf, lock_num + 4);
     powerboard->send_data_buf[lock_num + 5] = PROTOCOL_TAIL;
+        to_unlock_serials.clear();
     this->send_serial_data(powerboard);
     usleep(TEST_WAIT_TIME);
-    if((error = this->handle_receive_data(powerboard)) < 0)
+#if 0
+	boost::mutex::scoped_lock(mtx_smart_lock);
+
+    if(error  < 0)
     {
 
         if(err_cnt++ < COM_ERR_REPEAT_TIME)
@@ -305,6 +307,7 @@ begin:
     {
         err_cnt = 0;
     }
+#endif
     return error;
 }
 
@@ -344,11 +347,13 @@ int NoahPowerboard::get_lock_version(powerboard_t *powerboard)
     powerboard->send_data_buf[5] = 0xa5;
     this->send_serial_data(powerboard);
     usleep(TEST_WAIT_TIME);
+#if 0
     error = this->handle_receive_data(powerboard);
     if(error < 0)
     {
 
     }
+#endif
     return error;
 }
 
@@ -394,6 +399,8 @@ int NoahPowerboard::handle_receive_data(powerboard_t *sys)
             {
 
                 //frame_len = recv_buf_complete[i+1]; 
+		ROS_WARN("recv_buf_complete[%d]: is %d",i,recv_buf_complete[i]);
+		ROS_WARN("recv_buf_complete[%d]: is %d",i+1,recv_buf_complete[i+1]);
                 if(recv_buf_complete[i+1] != 0xcc)
                 {
                     frame_len = recv_buf_complete[i+1] - 1; 
@@ -401,7 +408,7 @@ int NoahPowerboard::handle_receive_data(powerboard_t *sys)
                 ROS_WARN("frame len is : %d",frame_len);
                 if(i+frame_len <= data_Len)
                 {
-                    if(0xA5 == recv_buf_complete[i+frame_len-1])
+                    if((0xA5 == recv_buf_complete[i+frame_len-1]) && (i + frame_len > 0))
                         //if(0xA5 == recv_buf_complete[i+frame_len-2])
                     {
                         for(j=0;j<frame_len;j++)
@@ -594,6 +601,7 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                                     to_unlock_serials.push_back((*it).lock_id);
                                 }while(0);
                                 status = 0;
+				//unlock(sys_powerboard);                    
                             }
                         }
                         //pub_info_to_agent(3,pw ,status);
@@ -615,7 +623,8 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                         uint8_t status = 1;
                         rfid.resize(4);
                         rfid.clear();
-                        for(uint8_t i = 0; i < 4; i++)
+                        //for(uint8_t i = 0; i < 4; i++)
+                        for(uint8_t i = 0; i < data_len - 7; i++)
                         {
                             rfid.push_back(frame_buf[4+i]);
                         }
@@ -625,7 +634,7 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                         {
                             if((*it).rfid == rfid)
                             {
-                                ROS_INFO("get right pass word");
+                                ROS_INFO("get right RFID  ID");
                                 to_unlock_serials.clear();
                                 to_unlock_serials.push_back((*it).lock_id);
                                 status = 0;
@@ -633,8 +642,10 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                                 {
                                     boost::mutex::scoped_lock(tmx_smart_lock);
                                     to_unlock_serials.clear();
-                                    to_unlock_serials.push_back((*it).lock_id);
+                                    //to_unlock_serials.push_back((*it).lock_id);
+                                    to_unlock_serials.push_back(1);
                                 }while(0);
+				//unlock(sys_powerboard);                    
 
                             }
                         }
@@ -654,7 +665,7 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                     {
                         std::string qr_code;
                         qr_code.clear();
-                        for(uint8_t i = 0; i < data_len - 5; i++)
+                        for( int i = 0; i < data_len - 7; i++)
                         {
                             qr_code.push_back(frame_buf[4+i]);
                         }
