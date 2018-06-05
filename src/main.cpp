@@ -50,8 +50,15 @@ int main(int argc, char **argv)
     signal(SIGINT, sigintHandler);
 
     //    powerboard.handle_receive_data(sys_powerboard);
+    bool init_flag = false;
     while(ros::ok())
     {
+        if(init_flag == false)
+        {
+            sleep(0.1);
+            powerboard->get_lock_version(sys_powerboard);//test 
+            init_flag = true;
+        }
         cnt++;
         //powerboard->handle_receive_data(sys_powerboard);//test 
         //powerboard->unlock(sys_powerboard);//test 

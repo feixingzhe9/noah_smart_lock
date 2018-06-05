@@ -405,6 +405,11 @@ int NoahPowerboard::handle_receive_data(powerboard_t *sys)
                 {
                     frame_len = recv_buf_complete[i+1] - 1; 
                 }
+                else
+                {
+                    i++;
+                    continue;
+                }
                 ROS_WARN("frame len is : %d",frame_len);
                 if(i+frame_len <= data_Len)
                 {
