@@ -131,7 +131,7 @@ int NoahPowerboard::PowerboardParamInit(void)
 void *uart_protocol_process(void* arg)
 {
     NoahPowerboard *pNoahPowerboard =  (NoahPowerboard*)arg; 
-    #if 0
+#if 0
     sys_powerboard->device = open_com_device(sys_powerboard->dev);
     if(sys_powerboard->device < 0 )
     {
@@ -146,7 +146,7 @@ void *uart_protocol_process(void* arg)
 #endif
     while(1)
     {
-		pNoahPowerboard->handle_receive_data(sys_powerboard);
+        pNoahPowerboard->handle_receive_data(sys_powerboard);
 
         do
         {
@@ -154,8 +154,8 @@ void *uart_protocol_process(void* arg)
             if(!to_unlock_serials.empty())
             {
 
-		    usleep(100*1000);
-		    pNoahPowerboard->unlock(sys_powerboard);                    
+                usleep(100*1000);
+                pNoahPowerboard->unlock(sys_powerboard);                    
             }
         }while(0);
         usleep(100*1000);
@@ -259,7 +259,7 @@ begin:
 
     uint8_t lock_num = 1;
     int error = -1;
-ROS_WARN("start to unlock ...");
+    ROS_WARN("start to unlock ...");
 #if 0
     do
     {
@@ -286,11 +286,11 @@ ROS_WARN("start to unlock ...");
 #endif
     powerboard->send_data_buf[lock_num + 4] = this->CalCheckSum(powerboard->send_data_buf, lock_num + 4);
     powerboard->send_data_buf[lock_num + 5] = PROTOCOL_TAIL;
-        to_unlock_serials.clear();
+    to_unlock_serials.clear();
     this->send_serial_data(powerboard);
     usleep(TEST_WAIT_TIME);
 #if 0
-	boost::mutex::scoped_lock(mtx_smart_lock);
+    boost::mutex::scoped_lock(mtx_smart_lock);
 
     if(error  < 0)
     {
@@ -399,8 +399,8 @@ int NoahPowerboard::handle_receive_data(powerboard_t *sys)
             {
 
                 //frame_len = recv_buf_complete[i+1]; 
-		ROS_WARN("recv_buf_complete[%d]: is %d",i,recv_buf_complete[i]);
-		ROS_WARN("recv_buf_complete[%d]: is %d",i+1,recv_buf_complete[i+1]);
+                ROS_WARN("recv_buf_complete[%d]: is %d",i,recv_buf_complete[i]);
+                ROS_WARN("recv_buf_complete[%d]: is %d",i+1,recv_buf_complete[i+1]);
                 if(recv_buf_complete[i+1] != 0xcc)
                 {
                     frame_len = recv_buf_complete[i+1] - 1; 
@@ -601,7 +601,7 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                                     to_unlock_serials.push_back((*it).lock_id);
                                 }while(0);
                                 status = 0;
-				//unlock(sys_powerboard);                    
+                                //unlock(sys_powerboard);                    
                             }
                         }
                         //pub_info_to_agent(3,pw ,status);
@@ -645,7 +645,7 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                                     //to_unlock_serials.push_back((*it).lock_id);
                                     to_unlock_serials.push_back(1);
                                 }while(0);
-				//unlock(sys_powerboard);                    
+                                //unlock(sys_powerboard);                    
 
                             }
                         }

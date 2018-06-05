@@ -281,9 +281,9 @@ typedef struct
 
 typedef struct
 {
-	uint8_t type;
-	std::string code;
-	uint8_t result;
+    uint8_t type;
+    std::string code;
+    uint8_t result;
 }pub_to_agent_t;
 
 
@@ -353,8 +353,8 @@ typedef struct
     uint8_t                     send_data_buf[SEND_DATA_BUF_LEN];
 
 
-   std::vector<uint8_t> lock_serials;
-   std::vector<lock_serials_stauts_t> lock_serials_status;
+    std::vector<uint8_t> lock_serials;
+    std::vector<lock_serials_stauts_t> lock_serials_status;
 }powerboard_t;
 
 typedef enum 
@@ -381,7 +381,7 @@ class NoahPowerboard
         {
             noah_powerboard_pub = n.advertise<std_msgs::String>("tx_noah_powerboard_node",1000);
             pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
-            
+
 
             lock_match_tmp.lock_id = 1;
 
@@ -451,7 +451,7 @@ class NoahPowerboard
 
 
 
-            
+
         }
         int PowerboardParamInit(void);
         int SetLedEffect(powerboard_t *powerboard);

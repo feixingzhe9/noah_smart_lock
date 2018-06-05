@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)powerboard);
     signal(SIGINT, sigintHandler);
 
-//    powerboard.handle_receive_data(sys_powerboard);
+    //    powerboard.handle_receive_data(sys_powerboard);
     while(ros::ok())
     {
         cnt++;
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
         //powerboard->pub_info_to_agent(1,"test");//test
         if(cnt % 200 == 50)
         {
-            
+
 #if 1   //Get battery info test function
             sys_powerboard->bat_info.cmd = 2; 
 #endif
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     //close(fd);
     if(close(sys_powerboard->device) > 0)
     {
-       // ROS_INFO("Close 
+        // ROS_INFO("Close 
     }
 
 }
