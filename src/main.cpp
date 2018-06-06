@@ -14,6 +14,11 @@
 #include <pthread.h>
 #include <smart_lock.h>
 
+#include <sqlite3.h>
+
+//#include "../include/smart_lock/sqlite3.h"
+//#include <sqlite3.h>
+
 class NoahPowerboard;
 void sigintHandler(int sig)
 {
@@ -21,6 +26,11 @@ void sigintHandler(int sig)
     ros::shutdown();
 }
 
+static int sqlite_test_callback(void *NotUsed, int argc, char **argv, char **azColName)
+{
+    static int i = 0;
+    ROS_INFO("%s, %d",__func__,i++); 
+}
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "noah_powerboard_node");
@@ -48,7 +58,46 @@ int main(int argc, char **argv)
     pthread_create(&can_protocol_proc_handle, NULL, uart_protocol_process,(void*)powerboard);
     pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)powerboard);
     signal(SIGINT, sigintHandler);
+#if 1   //sqlite test
 
+
+    sqlite3 *db=NULL;
+    char *zErrMsg = 0;
+    int rc;
+
+    //打开指定的数据库文件,如果不存在将创建一个同名的数据库文件
+    rc = sqlite3_open("/home/kaka/my_ros/src/smart_lock/src/pw_rfid.db", &db); 
+    if( rc )
+    {
+        fprintf(stderr, "Can't open database: %s/n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 1;
+    }
+    else printf("You have opened a sqlite3 database named pw_rfid.db successfully!/nCongratulations! Have fun !  ^-^ /n");
+    char *sql;
+    char *err_msg;
+    sql = "CREATE TABLE COMPANY("  \
+           "ID INT PRIMARY KEY     NOT NULL," \
+           "NAME           TEXT    NOT NULL," \
+           "AGE            INT     NOT NULL," \
+           "ADDRESS        CHAR(50)," \
+           "SALARY         REAL );";
+    sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
+
+    sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \
+           "VALUES (1, 'Paul', 32, 'California', 20000.000 ); " \
+           "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \
+           "VALUES (2, 'Allen', 25, 'Texas', 15000.00 ); "     \
+           "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY)" \
+           "VALUES (3, 'Teddy', 23, 'Norway', 20000.00 );" \
+           "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY)" \
+           "VALUES (4, 'Mark', 25, 'Rich-Mond ', 65000.00 );";
+
+    sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
+
+    sqlite3_close(db); //关闭数据库
+
+#endif
     //    powerboard.handle_receive_data(sys_powerboard);
     bool init_flag = false;
     while(ros::ok())

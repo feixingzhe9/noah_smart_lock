@@ -21,6 +21,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <time.h>
+#include <algorithm>
 #include <smart_lock.h>
 
 //#include <boost/uuid/uuid.hpp>
@@ -153,7 +154,11 @@ void *uart_protocol_process(void* arg)
             //boost::mutex::scoped_lock(mtx_smart_lock);
             if(!to_unlock_serials.empty())
             {
-
+                //std::vector<uint8_t>::iterator result  = find(to_unlock_serials.begin(), to_unlock_serials.end(), 1);
+                //if(result != to_unlock_serials.end())
+                //{
+                    //ROS_INFO("find lock id 1");     //test code
+                //}
                 usleep(100*1000);
                 pNoahPowerboard->unlock(sys_powerboard);                    
             }
@@ -518,6 +523,10 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                             single_status.lock_id = frame_buf[4+i*2];
                             single_status.status = (bool)frame_buf[4+i*2 + 1];
                             std::vector<lock_serials_stauts_t>::iterator it = lock_serials_status.begin();
+                            //lock_serials_stauts_t to_find;
+                            //to_find.lock_id = 1;
+                            //to_find.status = 0;
+                            //std::vector<lock_serials_stauts_t>::iterator result = find(lock_serials_status.begin(), lock_serials_status.end(), to_find);
                             for( ; it != lock_serials_status.end(); it++)
                             {
                                 if((*it).lock_id == single_status.lock_id)

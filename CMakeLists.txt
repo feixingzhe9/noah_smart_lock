@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
   CATKIN_DEPENDS roscpp std_msgs
+#  LIBRARIES ${PROJECT_NAME}
 )
 
 ###########
@@ -24,8 +25,16 @@ add_executable(smart_lock_node
 	src/uart.cpp
 	src/smart_lock.cpp
 )
+
+#set(EXTRALIB_BIN ${PROJECT_SOURCE_DIR}/lib/libsqlite.so.0)
+
+
+LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib/) 
+#LINK_DIRECTORIES(/usr/lib/) 
+
+
 target_link_libraries(smart_lock_node
-  ${catkin_LIBRARIES} 
+  ${catkin_LIBRARIES} sqlite3 
 )
 
 #############
