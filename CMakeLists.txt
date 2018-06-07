@@ -24,6 +24,7 @@ add_executable(smart_lock_node
     src/main.cpp
 	src/uart.cpp
 	src/smart_lock.cpp
+	src/data_proc.cpp
 )
 
 #set(EXTRALIB_BIN ${PROJECT_SOURCE_DIR}/lib/libsqlite.so.0)

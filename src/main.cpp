@@ -28,8 +28,13 @@ void sigintHandler(int sig)
 
 static int sqlite_test_callback(void *NotUsed, int argc, char **argv, char **azColName)
 {
-    static int i = 0;
-    ROS_INFO("%s, %d",__func__,i++); 
+    ROS_INFO("%s",__func__);
+    int i;
+    for(i=0; i<argc; i++){
+        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    }
+    printf("\n");
+    return 0;
 }
 int main(int argc, char **argv)
 {
@@ -76,24 +81,34 @@ int main(int argc, char **argv)
     else printf("You have opened a sqlite3 database named pw_rfid.db successfully!/nCongratulations! Have fun !  ^-^ /n");
     char *sql;
     char *err_msg;
-    sql = "CREATE TABLE COMPANY("  \
+    //sql = "CREATE TABLE COMPANY("  \
            "ID INT PRIMARY KEY     NOT NULL," \
            "NAME           TEXT    NOT NULL," \
            "AGE            INT     NOT NULL," \
            "ADDRESS        CHAR(50)," \
            "SALARY         REAL );";
+    //sql = "CREATE TABLE COMPANY(ID INT PRIMARY KEY NOT NULL,   NAME TEXT NOT NULL,  AGE INT  NOT NULL,  ADDRESS CHAR(50),   SALARY REAL);";
+    sql = "CREATE TABLE PIVAS(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);";
     sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
 
-    sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \
-           "VALUES (1, 'Paul', 32, 'California', 20000.000 ); " \
-           "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \
-           "VALUES (2, 'Allen', 25, 'Texas', 15000.00 ); "     \
-           "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY)" \
-           "VALUES (3, 'Teddy', 23, 'Norway', 20000.00 );" \
-           "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY)" \
-           "VALUES (4, 'Mark', 25, 'Rich-Mond ', 65000.00 );";
+    sql =   "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
+                        "VALUES (5,     '1055', '1234',     1023 ,      1   ); "  ;
+            "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
+                        "VALUES (3,     '1055', '1234',     1024 ,      1   ); "  ;
+          //"INSERT INTO PIVAS    (UID,   RFID,   PASSWORD,   WORD_ID,    DOOR_ID) "  \
+                        "VALUES (2,     '1056', '5555',     1024 ,      1   ); ";
+
+    //sql = "DELETE FROM COMPANY WHERE ID = 1";
+
 
     sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
+
+    sql = "SELECT * FROM PIVAS";
+    sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
+
+    extern int get_max_uid(sqlite3 *db);
+    ROS_INFO("max uid: %d",get_max_uid(db));
+
 
     sqlite3_close(db); //关闭数据库
 

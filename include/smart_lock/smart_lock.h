@@ -289,7 +289,14 @@ typedef struct
 }pub_to_agent_t;
 
 
-
+typedef struct
+{
+    int uid;
+    std::string rfid;
+    std::string password;
+    int worker_id;
+    int door_id;
+}lock_db_t;
 
 
 
