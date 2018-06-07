@@ -30,6 +30,8 @@ enum
     FRAME_TYPE_PW_UPLOAD        =  0x03,
     FRAME_TYPE_RFID_UPLOAD      =  0x04,
     FRAME_TYPE_QR_CODE_UPLOAD   =  0x05,
+    FRAME_TYPE_SET_SUPER_PW     =  0x06,
+    FRAME_TYPE_SET_SUPER_RFID   =  0x07,
 
 
     FRAME_TYPE_LOCK_VERSION     =  0x20,
@@ -471,6 +473,8 @@ class NoahPowerboard
 
         int unlock(powerboard_t *powerboard);  
         int get_lock_version(powerboard_t *powerboard);
+        int set_super_pw(powerboard_t *powerboard);
+        int set_super_rfid(powerboard_t *powerboard);
         void pub_info_to_agent(uint8_t type, std::string data, uint8_t status);
 
     private:

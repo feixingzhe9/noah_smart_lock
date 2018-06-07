@@ -65,6 +65,11 @@ std::vector<pub_to_agent_t> pub_to_agent_vector;	//boost::mutex::scoped_lock()
 //std::vector<uint8_t> lock_serials_vector;	//boost::mutex::scoped_lock()
 std::vector<uint8_t> to_unlock_serials;     //boost::mutex::scoped_lock()
 
+std::string to_set_super_pw = "5555";
+std::string to_set_super_rfid =  "0000";
+
+std::string set_super_pw_ack;
+std::string set_super_rfid_ack;
 void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t status)
 {
     json j;
@@ -319,7 +324,79 @@ begin:
 
 
 
+int NoahPowerboard::set_super_pw(powerboard_t *powerboard)    
+{
+begin:
+    static uint8_t err_cnt = 0;
 
+    int error = -1;
+    ROS_WARN("start to set super pass word ...");
+
+    powerboard->send_data_buf[0] = 0x5A;
+    powerboard->send_data_buf[1] = 10;
+    powerboard->send_data_buf[2] = FRAME_TYPE_SET_SUPER_PW;
+    powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
+
+    for(int i = 0; i < 4; i++)
+    {
+        if(to_set_super_pw.size() == 4)
+        {
+            powerboard->send_data_buf[4 + i]  = to_set_super_pw[i];
+        }
+        else
+        {
+            ROS_ERROR("to_set_super_pw.size() is not 4 ! !");
+        }
+    }
+    powerboard->send_data_buf[4]  = 5;
+    powerboard->send_data_buf[5]  = 5;
+    powerboard->send_data_buf[6]  = 5;
+    powerboard->send_data_buf[7]  = 5;
+
+    powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
+    powerboard->send_data_buf[9] = PROTOCOL_TAIL;
+
+    this->send_serial_data(powerboard);
+    usleep(TEST_WAIT_TIME);
+    return error;
+}
+
+int NoahPowerboard::set_super_rfid(powerboard_t *powerboard)     
+{
+begin:
+    static uint8_t err_cnt = 0;
+
+    int error = -1;
+    ROS_WARN("start to set super pass word ...");
+
+    powerboard->send_data_buf[0] = 0x5A;
+    powerboard->send_data_buf[1] = 10;
+    powerboard->send_data_buf[2] = FRAME_TYPE_SET_SUPER_RFID;
+    powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
+
+    for(int i = 0; i < 4; i++)
+    {
+        if(to_set_super_rfid.size() == 4)
+        {
+            powerboard->send_data_buf[4 + i]  = to_set_super_rfid[i];
+        }
+        else
+        {
+            ROS_ERROR("to_set_super_rfid.size() is not 4 ! !");
+        }
+    }
+    powerboard->send_data_buf[4]  = 5;
+    powerboard->send_data_buf[5]  = 5;
+    powerboard->send_data_buf[6]  = 5;
+    powerboard->send_data_buf[7]  = 5;
+
+    powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
+    powerboard->send_data_buf[9] = PROTOCOL_TAIL;
+
+    this->send_serial_data(powerboard);
+    usleep(TEST_WAIT_TIME);
+    return error;
+}
 
 #if 0
 int NoahPowerboard::get_lock_version(powerboard_t *powerboard)
@@ -577,6 +654,33 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                     }
                     break;
 
+                case FRAME_TYPE_SET_SUPER_PW:
+                    {
+                        uint8_t status = 0;
+                        status = frame_buf[4];
+                        ROS_WARN("get lock super pass word ack: status is %d",status);
+                        set_super_pw_ack.clear();
+                        for(uint8_t i = 0; i < 4; i++)
+                        {
+                            set_super_pw_ack.push_back(frame_buf[5+i]);
+                        }
+                        ROS_INFO("get lock super pass word ack : %s",set_super_pw_ack.data());
+                    }
+                    break;
+
+                case FRAME_TYPE_SET_SUPER_RFID:
+                    {
+                        uint8_t status = 0;
+                        status = frame_buf[4];
+                        ROS_WARN("get lock super RFID ack: status is %d",status);
+                        set_super_rfid_ack.clear();
+                        for(uint8_t i = 0; i < 4; i++)
+                        {
+                            set_super_rfid_ack.push_back(frame_buf[5+i]);
+                        }
+                        ROS_INFO("get lock super RFID ack : %s",set_super_rfid_ack.data());
+                    }
+                    break;
 
                 default :
                     break;

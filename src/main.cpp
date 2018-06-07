@@ -107,6 +107,11 @@ int main(int argc, char **argv)
             sleep(0.1);
             powerboard->get_lock_version(sys_powerboard);//test 
             init_flag = true;
+
+            sleep(1);
+            powerboard->set_super_pw(sys_powerboard);//test 
+            sleep(1);
+            powerboard->set_super_rfid(sys_powerboard);//test 
         }
         cnt++;
         //powerboard->handle_receive_data(sys_powerboard);//test 
