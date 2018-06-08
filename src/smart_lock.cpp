@@ -118,7 +118,7 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
     {
         pub_to_agent.publish(pub_json_msg);
         //usleep(2000*1000);
-        sleep(0.5);
+        usleep(500*1000);
     }
 }
 //extern NoahPowerboard  powerboard;
@@ -164,11 +164,11 @@ void *uart_protocol_process(void* arg)
                 //{
                     //ROS_INFO("find lock id 1");     //test code
                 //}
-                usleep(100*1000);
+                usleep(50*1000);
                 pNoahPowerboard->unlock(sys_powerboard);                    
             }
         }while(0);
-        usleep(100*1000);
+        usleep(50*1000);
     }
 }
 
@@ -225,17 +225,18 @@ int NoahPowerboard::send_serial_data(powerboard_t *sys)
 
     if(send_buf_len <= 0 )
     {
-        PowerboardInfo("noah_power send_buf len: %d small 0!",send_buf_len);
+        PowerboardInfo("smart_lock_node send_buf len: %d small 0!",send_buf_len);
         return -1;
     }
     for(int i =0;i<send_buf_len;i++)
     {
         //PowerboardInfo("noah_power send_buf :%02x",sys->send_data_buf[i]);
+        //ROS_INFO("smart_lock_node send_buf :%02x",sys->send_data_buf[i]);
     }
     len = write(sys->device,sys->send_data_buf,send_buf_len);
     if (len == send_buf_len)
     {
-        PowerboardInfo("noah_powerboard send ok");
+        PowerboardInfo("smart_lock_node send ok");
         return 0;
     }     
     else   
@@ -348,10 +349,10 @@ begin:
             ROS_ERROR("to_set_super_pw.size() is not 4 ! !");
         }
     }
-    powerboard->send_data_buf[4]  = 5;
-    powerboard->send_data_buf[5]  = 5;
-    powerboard->send_data_buf[6]  = 5;
-    powerboard->send_data_buf[7]  = 5;
+    powerboard->send_data_buf[4]  = '5';
+    powerboard->send_data_buf[5]  = '5';
+    powerboard->send_data_buf[6]  = '5';
+    powerboard->send_data_buf[7]  = '5';
 
     powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
     powerboard->send_data_buf[9] = PROTOCOL_TAIL;
@@ -385,10 +386,10 @@ begin:
             ROS_ERROR("to_set_super_rfid.size() is not 4 ! !");
         }
     }
-    powerboard->send_data_buf[4]  = 5;
-    powerboard->send_data_buf[5]  = 5;
-    powerboard->send_data_buf[6]  = 5;
-    powerboard->send_data_buf[7]  = 5;
+    powerboard->send_data_buf[4]  = '1';
+    powerboard->send_data_buf[5]  = '0';
+    powerboard->send_data_buf[6]  = '5';
+    powerboard->send_data_buf[7]  = '5';
 
     powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
     powerboard->send_data_buf[9] = PROTOCOL_TAIL;
@@ -481,8 +482,8 @@ int NoahPowerboard::handle_receive_data(powerboard_t *sys)
             {
 
                 //frame_len = recv_buf_complete[i+1]; 
-                ROS_WARN("recv_buf_complete[%d]: is %d",i,recv_buf_complete[i]);
-                ROS_WARN("recv_buf_complete[%d]: is %d",i+1,recv_buf_complete[i+1]);
+                //ROS_WARN("recv_buf_complete[%d]: is %d",i,recv_buf_complete[i]);
+                //ROS_WARN("recv_buf_complete[%d]: is %d",i+1,recv_buf_complete[i+1]);
                 if(recv_buf_complete[i+1] != 0xcc)
                 {
                     frame_len = recv_buf_complete[i+1] - 1; 

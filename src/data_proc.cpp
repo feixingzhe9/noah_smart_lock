@@ -33,7 +33,8 @@ sqlite3*  open_db(void)
     int rc;
 
     //打开指定的数据库文件,如果不存在将创建一个同名的数据库文件
-    rc = sqlite3_open("/home/kaka/my_ros/src/smart_lock/src/pw_rfid.db", &db); 
+    //rc = sqlite3_open("~/catkin_ws/install/lib/smart_lock/pw_rfid.db", &db); 
+    rc = sqlite3_open("pw_rfid.db", &db); 
     if( rc )
     {
         fprintf(stderr, "Can't open database: %s/n", sqlite3_errmsg(db));

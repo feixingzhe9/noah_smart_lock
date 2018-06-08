@@ -69,7 +69,6 @@ int main(int argc, char **argv)
 
     sqlite3 *db= open_db();
 
-
     char *sql;
     char *err_msg;
     //sql = "CREATE TABLE COMPANY("  \
@@ -130,13 +129,13 @@ int main(int argc, char **argv)
     {
         if(init_flag == false)
         {
-            sleep(0.1);
+            usleep(100*1000);
             powerboard->get_lock_version(sys_powerboard);//test 
             init_flag = true;
 
-            sleep(1);
+            sleep(2);
             powerboard->set_super_pw(sys_powerboard);//test 
-            sleep(1);
+            sleep(2);
             powerboard->set_super_rfid(sys_powerboard);//test 
         }
         cnt++;
