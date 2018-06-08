@@ -26,7 +26,37 @@
 //#include <vector>
 #include <sqlite3.h>
 
+sqlite3*  open_db(void)
+{
+    sqlite3 *db=NULL;
+    char *zErrMsg = 0;
+    int rc;
 
+    //打开指定的数据库文件,如果不存在将创建一个同名的数据库文件
+    rc = sqlite3_open("/home/kaka/my_ros/src/smart_lock/src/pw_rfid.db", &db); 
+    if( rc )
+    {
+        fprintf(stderr, "Can't open database: %s/n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return NULL;
+    }
+    else printf("You have opened a sqlite3 database named pw_rfid.db successfully!/nCongratulations! Have fun !  ^-^ /n");
+
+    return db;
+
+}
+
+int delete_all_db_data(sqlite3 *db)
+{
+    
+    char *zErrMsg = 0;
+    int rc;
+    std::string sql;
+    char *err_msg;
+
+    sql = "DELETE from PIVAS;";
+    sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+}
 static int sqlite_max_uid_callback(void *max_uid, int argc, char **argv, char **azColName)
 {
     ROS_WARN("%s",__func__);
@@ -85,4 +115,39 @@ std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str)
     return door_id;
 }
 
+
+static int sqlite_get_door_id_by_rfid_callback(void *tmp, int argc, char **argv, char **azColName)
+{
+    //ROS_INFO("%s = %s\n", azColName[0], argv[0] ? argv[0] : "NULL");
+    ROS_INFO("%s",__func__);
+    if(argv[0] != NULL)
+    {
+        std::vector<int>& door_id = *reinterpret_cast<std::vector<int>*>(tmp);
+        door_id.push_back(std::atoi(argv[0]));
+    }
+    else
+    {
+        ROS_ERROR("%s: this door_id is NULL !",__func__);
+    }
+    return 0;
+}
+std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str)
+{
+    char *zErrMsg = 0;
+    int rc;
+    std::vector<int> door_id;
+    std::string sql;
+    char *err_msg;
+    door_id.clear();
+
+    sql = "select DOOR_ID from PIVAS where RFID == \"" + input_str + "\";";
+    ROS_INFO("sql: %s",sql.data());
+    sqlite3_exec(db,sql.data(),sqlite_get_door_id_by_rfid_callback,(void*)(&door_id),&err_msg);
+
+    //for(std::vector<int>::iterator it = door_id.begin(); it != door_id.end(); it++)
+    {
+        //ROS_INFO("get door id by pass word in the databases: %d",*it);
+    }
+    return door_id;
+}
 

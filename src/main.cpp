@@ -65,20 +65,11 @@ int main(int argc, char **argv)
     signal(SIGINT, sigintHandler);
 #if 1   //sqlite test
 
+    extern sqlite3*  open_db(void);
 
-    sqlite3 *db=NULL;
-    char *zErrMsg = 0;
-    int rc;
+    sqlite3 *db= open_db();
 
-    //打开指定的数据库文件,如果不存在将创建一个同名的数据库文件
-    rc = sqlite3_open("/home/kaka/my_ros/src/smart_lock/src/pw_rfid.db", &db); 
-    if( rc )
-    {
-        fprintf(stderr, "Can't open database: %s/n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return 1;
-    }
-    else printf("You have opened a sqlite3 database named pw_rfid.db successfully!/nCongratulations! Have fun !  ^-^ /n");
+
     char *sql;
     char *err_msg;
     //sql = "CREATE TABLE COMPANY("  \
@@ -91,10 +82,13 @@ int main(int argc, char **argv)
     sql = "CREATE TABLE PIVAS(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);";
     sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
 
+    extern int delete_all_db_data(sqlite3 *db);
+    delete_all_db_data(db); 
+
     sql =   "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
                         "VALUES (5,     '1055', '1234',     1023 ,      1   ); "  
             "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
-                        "VALUES (6,     '1055', '1234',     1024 ,      2   ); " \ 
+                        "VALUES (6,     '1056', '1234',     1024 ,      2   ); " \ 
             "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
                         "VALUES (7,     '1055', '1234',     1024 ,      3   ); "  
             "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
@@ -113,10 +107,18 @@ int main(int argc, char **argv)
     extern int get_max_uid(sqlite3 *db);
     ROS_INFO("max uid: %d",get_max_uid(db));
     extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
-    std::vector<int> door_id_test =  get_door_id_by_pw(db, "1234");
-    for(std::vector<int>::iterator it = door_id_test.begin(); it != door_id_test.end(); it++)
+    std::vector<int> door_id_pw_test =  get_door_id_by_pw(db, "1234");
+    for(std::vector<int>::iterator it = door_id_pw_test.begin(); it != door_id_pw_test.end(); it++)
     {
         ROS_INFO("get door id by password in databases : %d",*it);
+    }
+
+
+    extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
+    std::vector<int> door_id_rfid_test =  get_door_id_by_rfid(db, "1055");
+    for(std::vector<int>::iterator it = door_id_rfid_test.begin(); it != door_id_rfid_test.end(); it++)
+    {
+        ROS_INFO("get door id by rfid in databases : %d",*it);
     }
 
     sqlite3_close(db); //关闭数据库
