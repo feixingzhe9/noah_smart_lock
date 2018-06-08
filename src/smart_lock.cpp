@@ -63,7 +63,7 @@ std::string lock_version;
 
 std::vector<pub_to_agent_t> pub_to_agent_vector;	//boost::mutex::scoped_lock()
 //std::vector<uint8_t> lock_serials_vector;	//boost::mutex::scoped_lock()
-std::vector<uint8_t> to_unlock_serials;     //boost::mutex::scoped_lock()
+std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
 
 std::string to_set_super_pw = "5555";
 std::string to_set_super_rfid =  "0000";
@@ -118,7 +118,7 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
     {
         pub_to_agent.publish(pub_json_msg);
         //usleep(2000*1000);
-        sleep(1);
+        sleep(0.5);
     }
 }
 //extern NoahPowerboard  powerboard;

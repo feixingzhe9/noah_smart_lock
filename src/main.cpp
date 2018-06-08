@@ -92,9 +92,13 @@ int main(int argc, char **argv)
     sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
 
     sql =   "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
-                        "VALUES (5,     '1055', '1234',     1023 ,      1   ); "  ;
+                        "VALUES (5,     '1055', '1234',     1023 ,      1   ); "  
             "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
-                        "VALUES (3,     '1055', '1234',     1024 ,      1   ); "  ;
+                        "VALUES (6,     '1055', '1234',     1024 ,      2   ); " \ 
+            "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
+                        "VALUES (7,     '1055', '1234',     1024 ,      3   ); "  
+            "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
+                        "VALUES (8,     '1055', '1234',     1024 ,      4   ); "; 
           //"INSERT INTO PIVAS    (UID,   RFID,   PASSWORD,   WORD_ID,    DOOR_ID) "  \
                         "VALUES (2,     '1056', '5555',     1024 ,      1   ); ";
 
@@ -108,7 +112,12 @@ int main(int argc, char **argv)
 
     extern int get_max_uid(sqlite3 *db);
     ROS_INFO("max uid: %d",get_max_uid(db));
-
+    extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
+    std::vector<int> door_id_test =  get_door_id_by_pw(db, "1234");
+    for(std::vector<int>::iterator it = door_id_test.begin(); it != door_id_test.end(); it++)
+    {
+        ROS_INFO("get door id by password in databases : %d",*it);
+    }
 
     sqlite3_close(db); //关闭数据库
 
