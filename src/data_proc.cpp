@@ -152,3 +152,58 @@ std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str)
     return door_id;
 }
 
+
+int insert_into_db(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id)
+{
+    char *zErrMsg = 0;
+    int rc;
+    std::string sql;
+    char *err_msg;
+    int uid = get_max_uid(db) + 1;
+    std::string uid_str = std::to_string(uid);
+    sql = "INSERT INTO PIVAS (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");"; 
+    ROS_INFO("%s: %s",__func__, sql.data());
+    sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+
+}
+
+
+
+static int sqlite_update_db_by_rfid_callback(void *tmp, int argc, char **argv, char **azColName)
+{
+    //ROS_INFO("%s = %s\n", azColName[0], argv[0] ? argv[0] : "NULL");
+    ROS_INFO("%s",__func__);
+    *(int*)tmp = 1; 
+    return 0;
+}
+int update_db_by_rfid(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id)
+{
+    char *zErrMsg = 0;
+    int rc;
+    std::string sql;
+    char *err_msg;
+    int uid = get_max_uid(db) + 1;
+    int is_have_the_rfid = 0;
+    std::string uid_str = std::to_string(uid);
+    //sql = "INSERT INTO PIVAS (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");"; 
+    sql = "SELECT RFID FROM PIVAS WHERE RFID =  \'" + rfid + "\';";
+    ROS_INFO("%s: %s",__func__, sql.data());
+    sqlite3_exec(db,sql.data(),sqlite_update_db_by_rfid_callback,(void *)&is_have_the_rfid,&err_msg);
+    if(is_have_the_rfid == 1)
+    {
+        
+        //sql = "UPDATE PIVAS SET UID = " + std::to_string(uid) + ", SET RFID = \'" + rfid + "\', SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
+        //sql = "UPDATE PIVAS  SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
+        sql = "UPDATE PIVAS SET PASSWORD = \'" + pw + "\' WHERE RFID = \'" + rfid + "\';"; 
+        ROS_INFO("%s, sql: %s",__func__, sql.data());
+    }
+    else
+    {
+        ROS_INFO("update db by rfid: have no such rfid, will insert this rfid");
+        insert_into_db(db, rfid, pw, work_id, door_id);
+    }
+
+}
+
+
+

@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
 
     extern int delete_all_db_data(sqlite3 *db);
-    delete_all_db_data(db); 
+    //delete_all_db_data(db); 
 
     sql =   "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
                         "VALUES (5,     '1055', '1234',     1023 ,      1   ); "  
@@ -119,6 +119,19 @@ int main(int argc, char **argv)
     {
         ROS_INFO("get door id by rfid in databases : %d",*it);
     }
+
+extern int insert_into_db(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
+    for(int i = 0; i < 20; i++)
+    {
+        
+        insert_into_db(db, std::to_string(1041 + i), "3333", 10, 100);
+    }
+
+
+    extern int update_db_by_rfid(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
+    update_db_by_rfid(db, "1059","1111",11,101);
+
+
 
     sqlite3_close(db); //关闭数据库
 
