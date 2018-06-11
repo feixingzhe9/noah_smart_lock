@@ -18,22 +18,10 @@
 
 //#include "../include/smart_lock/sqlite3.h"
 //#include <sqlite3.h>
-extern std::string table_pivas;
-extern std::string table_super_rfid_pw;
 
-extern sqlite3*  open_db(void);
-extern int create_table(sqlite3 *db);
-extern int delete_all_db_data(sqlite3 *db, std::string table);
-extern int get_max_uid(sqlite3 *db, std::string table);
-extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
-extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
-extern int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id);
-extern int update_db_by_rfid(sqlite3 *db,std::string table, std::string rfid, std::string pw, int work_id, int door_id);
-extern int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
-extern std::vector<lock_pivas_t> get_table_pivas_to_ram(sqlite3 *db, std::string table);
-
-extern std::vector<lock_pivas_t> lock_match_db_vec;
-
+extern  std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
+extern std::string get_table_super_pw_to_ram(sqlite3 *db, std::string table);
+extern std::string get_table_super_rfid_to_ram(sqlite3 *db, std::string table);
 
 class NoahPowerboard;
 void sigintHandler(int sig)
@@ -57,7 +45,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "noah_powerboard_node");
     //NoahPowerboard  powerboard;
     NoahPowerboard *powerboard = new NoahPowerboard();
-    ros::Rate loop_rate(1);
+    ros::Rate loop_rate(20);
     uint32_t cnt = 0;
     powerboard->PowerboardParamInit();
 
@@ -74,9 +62,9 @@ int main(int argc, char **argv)
         ROS_INFO("Open %s OK.",sys_powerboard->dev);
     }
 #endif
-    pthread_t can_protocol_proc_handle;
+    //pthread_t can_protocol_proc_handle;
     pthread_t agent_protocol_proc_handle;
-    pthread_create(&can_protocol_proc_handle, NULL, uart_protocol_process,(void*)powerboard);
+    //pthread_create(&can_protocol_proc_handle, NULL, uart_protocol_process,(void*)powerboard);
     pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)powerboard);
     signal(SIGINT, sigintHandler);
 
@@ -169,7 +157,6 @@ int main(int argc, char **argv)
 
     for(int i = 0; i < 20; i++)
     {
-        
         update_db_by_rfid(db, table_pivas, std::to_string(1046 + i), "3333", 10, 100);
     }
 
@@ -188,6 +175,11 @@ int main(int argc, char **argv)
         ROS_INFO("lock_match_db_vec.door_id = %d",      (*it).door_id);
 
     }
+
+    super_rfid = get_table_super_rfid_to_ram(db, table_super_rfid_pw);
+    ROS_INFO("super rfid : %s",super_rfid.data());
+    super_password = get_table_super_pw_to_ram(db, table_super_rfid_pw);
+    ROS_INFO("super password : %s",super_password.data());
     sqlite3_close(db); //关闭数据库
 
 #endif
@@ -207,20 +199,22 @@ int main(int argc, char **argv)
             powerboard->set_super_rfid(sys_powerboard);//test 
         }
         cnt++;
-        //powerboard->handle_receive_data(sys_powerboard);//test 
-        //powerboard->unlock(sys_powerboard);//test 
-        //powerboard->get_lock_version(sys_powerboard);//test 
-        //powerboard->pub_info_to_agent(1,"test");//test
-        if(cnt % 200 == 50)
-        {
+        powerboard->handle_receive_data(sys_powerboard);
 
-#if 1   //Get battery info test function
-            sys_powerboard->bat_info.cmd = 2; 
-#endif
-        }
-        if(cnt % 200 == 150)
+        do
         {
-        }
+            //boost::mutex::scoped_lock(mtx_smart_lock);
+            if(!to_unlock_serials.empty())
+            {
+                //std::vector<uint8_t>::iterator result  = find(to_unlock_serials.begin(), to_unlock_serials.end(), 1);
+                //if(result != to_unlock_serials.end())
+                //{
+                //ROS_INFO("find lock id 1");     //test code
+                //}
+                usleep(50*1000);
+                powerboard->unlock(sys_powerboard);
+            }
+        }while(0);
 
 
         ros::spinOnce();

@@ -71,6 +71,8 @@ std::string to_set_super_rfid =  "0000";
 std::string set_super_pw_ack;
 std::string set_super_rfid_ack;
 
+
+
 std::vector<lock_pivas_t> lock_match_db_vec;
 std::string super_rfid;
 std::string super_password;
@@ -140,48 +142,11 @@ int NoahPowerboard::PowerboardParamInit(void)
     return 0;
 }
 
-void *uart_protocol_process(void* arg)
-{
-    NoahPowerboard *pNoahPowerboard =  (NoahPowerboard*)arg; 
-#if 0
-    sys_powerboard->device = open_com_device(sys_powerboard->dev);
-    if(sys_powerboard->device < 0 )
-    {
-        ROS_ERROR("Open %s Failed !",sys_powerboard->dev);
-    }
-    else
-    {
-        set_speed(sys_powerboard->device,9600);
-        set_parity(sys_powerboard->device,8,1,'N');  
-        ROS_INFO("Open %s OK.",sys_powerboard->dev);
-    }
-#endif
-    while(1)
-    {
-        pNoahPowerboard->handle_receive_data(sys_powerboard);
-
-        do
-        {
-            //boost::mutex::scoped_lock(mtx_smart_lock);
-            if(!to_unlock_serials.empty())
-            {
-                //std::vector<uint8_t>::iterator result  = find(to_unlock_serials.begin(), to_unlock_serials.end(), 1);
-                //if(result != to_unlock_serials.end())
-                //{
-                    //ROS_INFO("find lock id 1");     //test code
-                //}
-                usleep(50*1000);
-                pNoahPowerboard->unlock(sys_powerboard);                    
-            }
-        }while(0);
-        usleep(50*1000);
-    }
-}
 
 void *agent_protocol_process(void* arg)
 {
     NoahPowerboard *pNoahPowerboard =  (NoahPowerboard*)arg; 
-    while(1)
+    while(ros::ok())
     {
         uint8_t type;
         uint8_t result;

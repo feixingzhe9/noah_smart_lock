@@ -1,6 +1,8 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "json.hpp"
+#include <sqlite3.h>
+
 using json = nlohmann::json;
 #ifndef LED_H
 #define LED_H
@@ -505,6 +507,24 @@ void set_speed(int fd, int speed);
 int set_parity(int fd,int databits,int stopbits,int parity);
 int open_com_device(char *dev);
 
+
+extern std::string table_pivas;
+extern std::string table_super_rfid_pw;
+
+extern sqlite3*  open_db(void);
+extern int create_table(sqlite3 *db);
+extern int delete_all_db_data(sqlite3 *db, std::string table);
+extern int get_max_uid(sqlite3 *db, std::string table);
+extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
+extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
+extern int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id);
+extern int update_db_by_rfid(sqlite3 *db,std::string table, std::string rfid, std::string pw, int work_id, int door_id);
+extern int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
+extern std::vector<lock_pivas_t> get_table_pivas_to_ram(sqlite3 *db, std::string table);
+
+extern std::vector<lock_pivas_t> lock_match_db_vec;
+extern std::string super_rfid;
+extern std::string super_password;
 #endif
 
 
