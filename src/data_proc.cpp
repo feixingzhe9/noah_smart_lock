@@ -195,6 +195,7 @@ int update_db_by_rfid(sqlite3 *db, std::string rfid, std::string pw, int work_id
         //sql = "UPDATE PIVAS SET UID = " + std::to_string(uid) + ", SET RFID = \'" + rfid + "\', SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
         //sql = "UPDATE PIVAS  SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
         sql = "UPDATE PIVAS SET PASSWORD = \'" + pw + "\' WHERE RFID = \'" + rfid + "\';"; 
+        sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
         ROS_INFO("%s, sql: %s",__func__, sql.data());
     }
     else

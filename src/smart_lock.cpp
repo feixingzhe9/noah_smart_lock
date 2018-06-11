@@ -563,13 +563,13 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
     uint8_t data_direction = 0;
     uint8_t data_len = 0;
     int error = -1;
-    frame_len = frame_buf[1];
+    frame_len = frame_buf[1] - 1;
 
     for(i=0;i<frame_len-2;i++)
     {
         check_data += frame_buf[i];
     }
-
+    check_data += 0xcc;
     if(check_data != frame_buf[frame_len-2] || PROTOCOL_TAIL != frame_buf[frame_len -1])
     {
         PowerboardInfo("led receive frame check error");
