@@ -26,6 +26,9 @@
 //#include <vector>
 #include <sqlite3.h>
 
+
+const std::string table_pivas = "PIVAS";
+const std::string table_super_rfid_pw = "SUPER_RFID_PW";
 sqlite3*  open_db(void)
 {
     sqlite3 *db=NULL;
@@ -46,7 +49,23 @@ sqlite3*  open_db(void)
     return db;
 
 }
+int create_table(sqlite3 *db)
+{
+    std::string sql;
+    char *err_msg;
+    //sql = "CREATE TABLE COMPANY("  \
+    "ID INT PRIMARY KEY     NOT NULL," \
+        "NAME           TEXT    NOT NULL," \
+        "AGE            INT     NOT NULL," \
+        "ADDRESS        CHAR(50)," \
+        "SALARY         REAL );";
+    //sql = "CREATE TABLE COMPANY(ID INT PRIMARY KEY NOT NULL,   NAME TEXT NOT NULL,  AGE INT  NOT NULL,  ADDRESS CHAR(50),   SALARY REAL);";
+    sql = "CREATE TABLE " + table_pivas + "(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);";
+    sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
 
+    sql = "CREATE TABLE " + table_super_rfid_pw + " (UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL);";
+    sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+}
 int delete_all_db_data(sqlite3 *db)
 {
     
@@ -55,14 +74,25 @@ int delete_all_db_data(sqlite3 *db)
     std::string sql;
     char *err_msg;
 
-    sql = "DELETE from PIVAS;";
+    sql = "DELETE from " + table_pivas +";";
+    sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+
+    sql = "DELETE from " + table_super_rfid_pw +";";
     sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
 }
 static int sqlite_max_uid_callback(void *max_uid, int argc, char **argv, char **azColName)
 {
     ROS_WARN("%s",__func__);
     printf("%s = %s\n", azColName[0], argv[0] ? argv[0] : "NULL");
-    *(int*)max_uid = std::atoi(argv[0]);
+    if(!argv[0])
+    {
+        *(int*)max_uid = 0;
+        ROS_ERROR("%s: This db is NULL !",__func__);
+    }
+    else
+    {
+        *(int*)max_uid = std::atoi(argv[0]);
+    }
     return 0;
 }
 
@@ -72,11 +102,12 @@ int get_max_uid(sqlite3 *db)
     char *zErrMsg = 0;
     int rc;
     int max_uid;
-    char *sql;
+    //char *sql;
+    std::string sql;
     char *err_msg;
 
     sql = "SELECT max(UID) FROM PIVAS";
-    sqlite3_exec(db,sql,sqlite_max_uid_callback,(void*)(&max_uid),&err_msg);
+    sqlite3_exec(db,sql.data(),sqlite_max_uid_callback,(void*)(&max_uid),&err_msg);
 
     return max_uid;
 }
@@ -176,7 +207,7 @@ static int sqlite_update_db_by_rfid_callback(void *tmp, int argc, char **argv, c
     *(int*)tmp = 1; 
     return 0;
 }
-int update_db_by_rfid(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id)
+int update_db_by_rfid(sqlite3 *db, std::string rfid, std::string pw, int worker_id, int door_id)
 {
     char *zErrMsg = 0;
     int rc;
@@ -196,12 +227,19 @@ int update_db_by_rfid(sqlite3 *db, std::string rfid, std::string pw, int work_id
         //sql = "UPDATE PIVAS  SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
         sql = "UPDATE PIVAS SET PASSWORD = \'" + pw + "\' WHERE RFID = \'" + rfid + "\';"; 
         sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+
+        sql = "UPDATE PIVAS SET WORKER_ID = \'" + std::to_string(worker_id) + "\' WHERE RFID = \'" + rfid + "\';"; 
+        sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+
+        sql = "UPDATE PIVAS SET DOOR_ID = \'" + std::to_string(door_id) + "\' WHERE RFID = \'" + rfid + "\';"; 
+        sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+
         ROS_INFO("%s, sql: %s",__func__, sql.data());
     }
     else
     {
         ROS_INFO("update db by rfid: have no such rfid, will insert this rfid");
-        insert_into_db(db, rfid, pw, work_id, door_id);
+        insert_into_db(db, rfid, pw, worker_id, door_id);
     }
 
 }

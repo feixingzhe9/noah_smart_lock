@@ -18,6 +18,18 @@
 
 //#include "../include/smart_lock/sqlite3.h"
 //#include <sqlite3.h>
+extern sqlite3*  open_db(void);
+extern int create_table(sqlite3 *db);
+extern int delete_all_db_data(sqlite3 *db);
+extern int insert_into_db(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
+extern int get_max_uid(sqlite3 *db);
+extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
+extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
+extern int insert_into_db(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
+extern int update_db_by_rfid(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
+
+std::vector<lock_pivas_t> pivas_db_vector;
+
 
 class NoahPowerboard;
 void sigintHandler(int sig)
@@ -63,49 +75,78 @@ int main(int argc, char **argv)
     pthread_create(&can_protocol_proc_handle, NULL, uart_protocol_process,(void*)powerboard);
     pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)powerboard);
     signal(SIGINT, sigintHandler);
+
+#if 1
+    lock_pivas_t lock_pivas_tmp;
+
+    lock_pivas_tmp.rfid = "1040";
+    lock_pivas_tmp.password = "1234";
+    lock_pivas_tmp.worker_id = 10;
+    lock_pivas_tmp.door_id = 1;
+    pivas_db_vector.push_back(lock_pivas_tmp);
+
+    lock_pivas_tmp.rfid = "1041";
+    lock_pivas_tmp.password = "1235";
+    lock_pivas_tmp.worker_id = 11;
+    lock_pivas_tmp.door_id = 2;
+    pivas_db_vector.push_back(lock_pivas_tmp);
+
+    lock_pivas_tmp.rfid = "1042";
+    lock_pivas_tmp.password = "1236";
+    lock_pivas_tmp.worker_id = 12;
+    lock_pivas_tmp.door_id = 3;
+    pivas_db_vector.push_back(lock_pivas_tmp);
+
+    lock_pivas_tmp.rfid = "1043";
+    lock_pivas_tmp.password = "1237";
+    lock_pivas_tmp.worker_id = 13;
+    lock_pivas_tmp.door_id = 4;
+    pivas_db_vector.push_back(lock_pivas_tmp);
+
+    lock_pivas_tmp.rfid = "1044";
+    lock_pivas_tmp.password = "1238";
+    lock_pivas_tmp.worker_id = 14;
+    lock_pivas_tmp.door_id = 5;
+    pivas_db_vector.push_back(lock_pivas_tmp);
+
+    lock_pivas_tmp.rfid = "1045";
+    lock_pivas_tmp.password = "1239";
+    lock_pivas_tmp.worker_id = 15;
+    lock_pivas_tmp.door_id = 6;
+    pivas_db_vector.push_back(lock_pivas_tmp);
+
+    lock_pivas_tmp.rfid = "1046";
+    lock_pivas_tmp.password = "1240";
+    lock_pivas_tmp.worker_id = 16;
+    lock_pivas_tmp.door_id = 7;
+    pivas_db_vector.push_back(lock_pivas_tmp);
+
+    lock_pivas_tmp.rfid = "1047";
+    lock_pivas_tmp.password = "1241";
+    lock_pivas_tmp.worker_id = 17;
+    lock_pivas_tmp.door_id = 8;
+    pivas_db_vector.push_back(lock_pivas_tmp);
+#endif
+
+
 #if 1   //sqlite test
 
-    extern sqlite3*  open_db(void);
 
     sqlite3 *db= open_db();
-
-    char *sql;
+    std::string sql;
     char *err_msg;
-    //sql = "CREATE TABLE COMPANY("  \
-           "ID INT PRIMARY KEY     NOT NULL," \
-           "NAME           TEXT    NOT NULL," \
-           "AGE            INT     NOT NULL," \
-           "ADDRESS        CHAR(50)," \
-           "SALARY         REAL );";
-    //sql = "CREATE TABLE COMPANY(ID INT PRIMARY KEY NOT NULL,   NAME TEXT NOT NULL,  AGE INT  NOT NULL,  ADDRESS CHAR(50),   SALARY REAL);";
-    sql = "CREATE TABLE PIVAS(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);";
-    sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
+    create_table(db);
 
-    extern int delete_all_db_data(sqlite3 *db);
     //delete_all_db_data(db); 
 
-    sql =   "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
-                        "VALUES (5,     '1055', '1234',     1023 ,      1   ); "  
-            "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
-                        "VALUES (6,     '1056', '1234',     1024 ,      2   ); " \ 
-            "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
-                        "VALUES (7,     '1055', '1234',     1024 ,      3   ); "  
-            "INSERT INTO PIVAS  (UID,   RFID,   PASSWORD,   WORKER_ID,  DOOR_ID) "  \
-                        "VALUES (8,     '1055', '1234',     1024 ,      4   ); "; 
-          //"INSERT INTO PIVAS    (UID,   RFID,   PASSWORD,   WORD_ID,    DOOR_ID) "  \
-                        "VALUES (2,     '1056', '5555',     1024 ,      1   ); ";
-
-    //sql = "DELETE FROM COMPANY WHERE ID = 1";
-
-
-    sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
-
+    for(std::vector<lock_pivas_t>::iterator it = pivas_db_vector.begin(); it != pivas_db_vector.end(); it++)
+    {
+        update_db_by_rfid(db,(*it).rfid,(*it).password,(*it).worker_id,(*it).door_id);
+    }
     sql = "SELECT * FROM PIVAS";
-    sqlite3_exec(db,sql,sqlite_test_callback,0,&err_msg);
+    sqlite3_exec(db,sql.data(),sqlite_test_callback,0,&err_msg);
 
-    extern int get_max_uid(sqlite3 *db);
     ROS_INFO("max uid: %d",get_max_uid(db));
-    extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
     std::vector<int> door_id_pw_test =  get_door_id_by_pw(db, "1234");
     for(std::vector<int>::iterator it = door_id_pw_test.begin(); it != door_id_pw_test.end(); it++)
     {
@@ -113,24 +154,20 @@ int main(int argc, char **argv)
     }
 
 
-    extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
     std::vector<int> door_id_rfid_test =  get_door_id_by_rfid(db, "1055");
     for(std::vector<int>::iterator it = door_id_rfid_test.begin(); it != door_id_rfid_test.end(); it++)
     {
         ROS_INFO("get door id by rfid in databases : %d",*it);
     }
 
-extern int insert_into_db(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
     for(int i = 0; i < 20; i++)
     {
         
-        insert_into_db(db, std::to_string(1041 + i), "3333", 10, 100);
+        update_db_by_rfid(db, std::to_string(1045 + i), "3333", 10, 100);
     }
 
 
-    extern int update_db_by_rfid(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
     update_db_by_rfid(db, "1059","1911",11,101);
-
 
 
     sqlite3_close(db); //关闭数据库

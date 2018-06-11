@@ -296,7 +296,7 @@ typedef struct
     std::string password;
     int worker_id;
     int door_id;
-}lock_db_t;
+}lock_pivas_t;
 
 
 
