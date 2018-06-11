@@ -30,7 +30,9 @@ extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
 extern int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id);
 extern int update_db_by_rfid(sqlite3 *db,std::string table, std::string rfid, std::string pw, int work_id, int door_id);
 extern int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
-std::vector<lock_pivas_t> pivas_db_vector;
+extern std::vector<lock_pivas_t> get_table_pivas_to_ram(sqlite3 *db, std::string table);
+
+extern std::vector<lock_pivas_t> lock_match_db_vec;
 
 
 class NoahPowerboard;
@@ -78,56 +80,56 @@ int main(int argc, char **argv)
     pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)powerboard);
     signal(SIGINT, sigintHandler);
 
-#if 1
+#if 0
     lock_pivas_t lock_pivas_tmp;
 
     lock_pivas_tmp.rfid = "1040";
     lock_pivas_tmp.password = "1234";
     lock_pivas_tmp.worker_id = 10;
     lock_pivas_tmp.door_id = 1;
-    pivas_db_vector.push_back(lock_pivas_tmp);
+    lock_match_db_vec.push_back(lock_pivas_tmp);
 
     lock_pivas_tmp.rfid = "1041";
     lock_pivas_tmp.password = "1235";
     lock_pivas_tmp.worker_id = 11;
     lock_pivas_tmp.door_id = 2;
-    pivas_db_vector.push_back(lock_pivas_tmp);
+    lock_match_db_vec.push_back(lock_pivas_tmp);
 
     lock_pivas_tmp.rfid = "1042";
     lock_pivas_tmp.password = "1236";
     lock_pivas_tmp.worker_id = 12;
     lock_pivas_tmp.door_id = 3;
-    pivas_db_vector.push_back(lock_pivas_tmp);
+    lock_match_db_vec.push_back(lock_pivas_tmp);
 
     lock_pivas_tmp.rfid = "1043";
     lock_pivas_tmp.password = "1237";
     lock_pivas_tmp.worker_id = 13;
     lock_pivas_tmp.door_id = 4;
-    pivas_db_vector.push_back(lock_pivas_tmp);
+    lock_match_db_vec.push_back(lock_pivas_tmp);
 
     lock_pivas_tmp.rfid = "1044";
     lock_pivas_tmp.password = "1238";
     lock_pivas_tmp.worker_id = 14;
     lock_pivas_tmp.door_id = 5;
-    pivas_db_vector.push_back(lock_pivas_tmp);
+    lock_match_db_vec.push_back(lock_pivas_tmp);
 
     lock_pivas_tmp.rfid = "1045";
     lock_pivas_tmp.password = "1239";
     lock_pivas_tmp.worker_id = 15;
     lock_pivas_tmp.door_id = 6;
-    pivas_db_vector.push_back(lock_pivas_tmp);
+    lock_match_db_vec.push_back(lock_pivas_tmp);
 
     lock_pivas_tmp.rfid = "1046";
     lock_pivas_tmp.password = "1240";
     lock_pivas_tmp.worker_id = 16;
     lock_pivas_tmp.door_id = 7;
-    pivas_db_vector.push_back(lock_pivas_tmp);
+    lock_match_db_vec.push_back(lock_pivas_tmp);
 
     lock_pivas_tmp.rfid = "1047";
     lock_pivas_tmp.password = "1241";
     lock_pivas_tmp.worker_id = 17;
     lock_pivas_tmp.door_id = 8;
-    pivas_db_vector.push_back(lock_pivas_tmp);
+    lock_match_db_vec.push_back(lock_pivas_tmp);
 #endif
 
 
@@ -139,12 +141,12 @@ int main(int argc, char **argv)
     char *err_msg;
     create_table(db);
 
-    delete_all_db_data(db, table_pivas); 
-    delete_all_db_data(db, table_super_rfid_pw); 
+    //delete_all_db_data(db, table_pivas); 
+    //delete_all_db_data(db, table_super_rfid_pw); 
 
-    for(std::vector<lock_pivas_t>::iterator it = pivas_db_vector.begin(); it != pivas_db_vector.end(); it++)
+    //for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
     {
-        update_db_by_rfid(db, table_pivas, (*it).rfid,(*it).password,(*it).worker_id,(*it).door_id);
+        //update_db_by_rfid(db, table_pivas, (*it).rfid,(*it).password,(*it).worker_id,(*it).door_id);
     }
 
     insert_super_into_db(db, table_super_rfid_pw, "9999", "3333");
@@ -175,6 +177,17 @@ int main(int argc, char **argv)
     update_db_by_rfid(db, table_pivas, "1059","1911",11,101);
 
 
+    lock_match_db_vec = get_table_pivas_to_ram(db, table_pivas);
+    ROS_INFO("lock_match_db_vec.size = %d", lock_match_db_vec.size());
+    for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
+    {
+        ROS_WARN("lock_match_db_vec.uid = %d",          (*it).uid);
+        ROS_INFO("lock_match_db_vec.rfid = %s",         (*it).rfid.data());
+        ROS_INFO("lock_match_db_vec.password = %s",     (*it).password.data());
+        ROS_INFO("lock_match_db_vec.worker_id = %d",    (*it).worker_id);
+        ROS_INFO("lock_match_db_vec.door_id = %d",      (*it).door_id);
+
+    }
     sqlite3_close(db); //关闭数据库
 
 #endif

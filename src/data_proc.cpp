@@ -258,3 +258,50 @@ int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::s
     sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
 
 }
+
+
+static int sqlite_get_table_pivas_to_ram_callback(void *tmp, int argc, char **argv, char **azColName)
+{
+    ROS_WARN("%s",__func__);
+    for(int i = 0; i < argc; i++)
+    {
+        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    }
+    lock_pivas_t pivas_vec_tmp;
+    if(!argv[0])
+    {
+        ROS_ERROR("%s: This db is NULL !",__func__);
+    }
+    else
+    {
+        std::vector<lock_pivas_t>& pivas_vec = *reinterpret_cast<std::vector<lock_pivas_t>*>(tmp);
+/*"(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);" */
+        pivas_vec_tmp.uid = std::atoi(argv[0]);
+        //ROS_ERROR("pivas_vec_tmp.uid = %d", pivas_vec_tmp.uid);
+        pivas_vec_tmp.rfid = argv[1];
+        //ROS_ERROR("pivas_vec_tmp.rfid = %s", pivas_vec_tmp.rfid.data());
+        pivas_vec_tmp.password = argv[2];
+        //ROS_ERROR("pivas_vec_tmp.password = %s", pivas_vec_tmp.password.data());
+        pivas_vec_tmp.worker_id = std::atoi(argv[3]);
+        //ROS_ERROR("pivas_vec_tmp.worker_id = %d", pivas_vec_tmp.worker_id);
+        pivas_vec_tmp.door_id = std::atoi(argv[3]);
+        //ROS_ERROR("pivas_vec_tmp.door_id = %d", pivas_vec_tmp.door_id);
+        pivas_vec.push_back(pivas_vec_tmp);
+    }
+    return 0;
+}
+std::vector<lock_pivas_t> get_table_pivas_to_ram(sqlite3 *db, std::string table)
+{
+    char *zErrMsg = 0;
+    int rc;
+    std::string sql;
+    char *err_msg;
+    std::vector<lock_pivas_t> pivas;
+    pivas.clear();
+    sql = "SELECT * FROM " + table + ";";
+    ROS_INFO("%s: %s",__func__, sql.data());
+    sqlite3_exec(db,sql.data(),sqlite_get_table_pivas_to_ram_callback,(void*)(&pivas), &err_msg);
+
+    return pivas;
+
+}

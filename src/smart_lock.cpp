@@ -70,6 +70,12 @@ std::string to_set_super_rfid =  "0000";
 
 std::string set_super_pw_ack;
 std::string set_super_rfid_ack;
+
+std::vector<lock_pivas_t> lock_match_db_vec;
+std::string super_rfid;
+std::string super_password;
+
+
 void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t status)
 {
     json j;
@@ -706,9 +712,9 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                         //ROS_ERROR("receive pass word: %s",pw.data());
                         input_pw.push_back(pw);
 
-                        for(std::vector<lock_match_t>::iterator it = lock_match_db.begin(); it != lock_match_db.end(); it++)
+                        for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
                         {
-                            if((*it).pw == pw)
+                            if((*it).password == pw)
                             {
                                 ROS_INFO("get right pass word");
                                 //ROS_ERROR("get right pass word");
@@ -717,7 +723,7 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                                     boost::mutex::scoped_lock(tmx_smart_lock);
                                     to_unlock_serials.clear();
                                     //to_unlock_serials.push_back((*it).lock_id);
-                                    to_unlock_serials.push_back((*it).lock_id);
+                                    to_unlock_serials.push_back((*it).door_id);
                                 }while(0);
                                 status = 0;
                                 //unlock(sys_powerboard);                    
@@ -749,13 +755,13 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                         }
                         ROS_INFO("receive RFID: %s",rfid.data());
                         input_rfid.push_back(rfid);
-                        for(std::vector<lock_match_t>::iterator it = lock_match_db.begin(); it != lock_match_db.end(); it++)
+                        for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
                         {
                             if((*it).rfid == rfid)
                             {
                                 ROS_INFO("get right RFID  ID");
                                 to_unlock_serials.clear();
-                                to_unlock_serials.push_back((*it).lock_id);
+                                to_unlock_serials.push_back((*it).door_id);
                                 status = 0;
                                 do
                                 {

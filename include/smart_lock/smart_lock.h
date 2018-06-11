@@ -390,8 +390,8 @@ class NoahPowerboard
         {
             noah_powerboard_pub = n.advertise<std_msgs::String>("tx_noah_powerboard_node",1000);
             pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
-
-
+            //lock_match_db.clear();
+#if 0
             lock_match_tmp.lock_id = 1;
 
             lock_match_tmp.pw = "8888";
@@ -457,7 +457,7 @@ class NoahPowerboard
             lock_match_tmp.pw = "4352";
             lock_match_tmp.rfid = "1055";
             lock_match_db.push_back(lock_match_tmp);
-
+#endif
 
 
 
@@ -474,7 +474,7 @@ class NoahPowerboard
         int send_serial_data(powerboard_t *sys);
         int handle_receive_data(powerboard_t *sys);
 
-        std::vector<lock_match_t> lock_match_db;
+        //std::vector<lock_pivas_t> lock_match_db;
 
 
 
@@ -494,7 +494,7 @@ class NoahPowerboard
         json j;
         void pub_json_msg_to_app(const nlohmann::json j_msg);
 
-        lock_match_t lock_match_tmp;
+        lock_pivas_t lock_match_tmp;
 
 
 };
