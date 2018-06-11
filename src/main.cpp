@@ -18,16 +18,18 @@
 
 //#include "../include/smart_lock/sqlite3.h"
 //#include <sqlite3.h>
+extern std::string table_pivas;
+extern std::string table_super_rfid_pw;
+
 extern sqlite3*  open_db(void);
 extern int create_table(sqlite3 *db);
-extern int delete_all_db_data(sqlite3 *db);
-extern int insert_into_db(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
-extern int get_max_uid(sqlite3 *db);
+extern int delete_all_db_data(sqlite3 *db, std::string table);
+extern int get_max_uid(sqlite3 *db, std::string table);
 extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
 extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
-extern int insert_into_db(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
-extern int update_db_by_rfid(sqlite3 *db, std::string rfid, std::string pw, int work_id, int door_id);
-
+extern int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id);
+extern int update_db_by_rfid(sqlite3 *db,std::string table, std::string rfid, std::string pw, int work_id, int door_id);
+extern int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
 std::vector<lock_pivas_t> pivas_db_vector;
 
 
@@ -137,16 +139,19 @@ int main(int argc, char **argv)
     char *err_msg;
     create_table(db);
 
-    //delete_all_db_data(db); 
+    delete_all_db_data(db, table_pivas); 
+    delete_all_db_data(db, table_super_rfid_pw); 
 
     for(std::vector<lock_pivas_t>::iterator it = pivas_db_vector.begin(); it != pivas_db_vector.end(); it++)
     {
-        update_db_by_rfid(db,(*it).rfid,(*it).password,(*it).worker_id,(*it).door_id);
+        update_db_by_rfid(db, table_pivas, (*it).rfid,(*it).password,(*it).worker_id,(*it).door_id);
     }
+
+    insert_super_into_db(db, table_super_rfid_pw, "9999", "3333");
     sql = "SELECT * FROM PIVAS";
     sqlite3_exec(db,sql.data(),sqlite_test_callback,0,&err_msg);
 
-    ROS_INFO("max uid: %d",get_max_uid(db));
+    //ROS_INFO("max uid: %d",get_max_uid(db,));
     std::vector<int> door_id_pw_test =  get_door_id_by_pw(db, "1234");
     for(std::vector<int>::iterator it = door_id_pw_test.begin(); it != door_id_pw_test.end(); it++)
     {
@@ -163,11 +168,11 @@ int main(int argc, char **argv)
     for(int i = 0; i < 20; i++)
     {
         
-        update_db_by_rfid(db, std::to_string(1045 + i), "3333", 10, 100);
+        update_db_by_rfid(db, table_pivas, std::to_string(1046 + i), "3333", 10, 100);
     }
 
 
-    update_db_by_rfid(db, "1059","1911",11,101);
+    update_db_by_rfid(db, table_pivas, "1059","1911",11,101);
 
 
     sqlite3_close(db); //关闭数据库
