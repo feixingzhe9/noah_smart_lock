@@ -220,7 +220,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
     sqlite3_exec(db,sql.data(),sqlite_update_db_by_rfid_callback,(void *)&is_have_the_rfid,&err_msg);
     if(is_have_the_rfid == 1)
     {
-        
+
         //sql = "UPDATE PIVAS SET UID = " + std::to_string(uid) + ", SET RFID = \'" + rfid + "\', SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
         //sql = "UPDATE PIVAS  SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
         sql = "UPDATE PIVAS SET PASSWORD = \'" + pw + "\' WHERE RFID = \'" + rfid + "\';"; 
@@ -243,7 +243,6 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
 }
 
 
-
 int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw)
 {
     char *zErrMsg = 0;
@@ -259,6 +258,32 @@ int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::s
 
 }
 
+int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw)
+{
+    char *zErrMsg = 0;
+    int rc;
+    std::string sql;
+    char *err_msg;
+    int uid = get_max_uid(db, table);
+    if(uid == 0)
+    {
+        insert_super_into_db(db, table, rfid, pw);
+    }
+    else if(uid == 1)
+    {
+        sql = "UPDATE SUPER_RFID_PW SET PASSWORD = \'" + pw + "\' WHERE UID = \'" + std::to_string(1) + "\';"; 
+        sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+        sql = "UPDATE SUPER_RFID_PW SET rfid = \'" + rfid + "\' WHERE UID = \'" + std::to_string(1) + "\';"; 
+        sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+    }
+    else if (uid > 1)
+    {
+        sql = "DELETE from " + table +";";
+        sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
+
+    }
+
+}
 
 static int sqlite_get_table_pivas_to_ram_callback(void *tmp, int argc, char **argv, char **azColName)
 {
@@ -275,12 +300,12 @@ static int sqlite_get_table_pivas_to_ram_callback(void *tmp, int argc, char **ar
     else
     {
         std::vector<lock_pivas_t>& pivas_vec = *reinterpret_cast<std::vector<lock_pivas_t>*>(tmp);
-/*"(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);" */
+        /*"(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);" */
         pivas_vec_tmp.uid = std::atoi(argv[0]);
         pivas_vec_tmp.rfid = argv[1];
         pivas_vec_tmp.password = argv[2];
         pivas_vec_tmp.worker_id = std::atoi(argv[3]);
-        pivas_vec_tmp.door_id = std::atoi(argv[3]);
+        pivas_vec_tmp.door_id = std::atoi(argv[4]);
         pivas_vec.push_back(pivas_vec_tmp);
     }
     return 0;

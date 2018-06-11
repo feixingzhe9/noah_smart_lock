@@ -202,7 +202,7 @@ int NoahPowerboard::send_serial_data(powerboard_t *sys)
     for(int i =0;i<send_buf_len;i++)
     {
         //PowerboardInfo("noah_power send_buf :%02x",sys->send_data_buf[i]);
-        //ROS_INFO("smart_lock_node send_buf :%02x",sys->send_data_buf[i]);
+        ROS_INFO("smart_lock_node send_buf :%02x",sys->send_data_buf[i]);
     }
     len = write(sys->device,sys->send_data_buf,send_buf_len);
     if (len == send_buf_len)
@@ -308,7 +308,7 @@ begin:
     powerboard->send_data_buf[1] = 10;
     powerboard->send_data_buf[2] = FRAME_TYPE_SET_SUPER_PW;
     powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
-
+    to_set_super_pw = super_password;
     for(int i = 0; i < 4; i++)
     {
         if(to_set_super_pw.size() == 4)
@@ -320,10 +320,10 @@ begin:
             ROS_ERROR("to_set_super_pw.size() is not 4 ! !");
         }
     }
-    powerboard->send_data_buf[4]  = '5';
-    powerboard->send_data_buf[5]  = '5';
-    powerboard->send_data_buf[6]  = '5';
-    powerboard->send_data_buf[7]  = '5';
+    //powerboard->send_data_buf[4]  = '5';
+    //powerboard->send_data_buf[5]  = '5';
+    //powerboard->send_data_buf[6]  = '5';
+    //powerboard->send_data_buf[7]  = '5';
 
     powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
     powerboard->send_data_buf[9] = PROTOCOL_TAIL;
@@ -345,7 +345,7 @@ begin:
     powerboard->send_data_buf[1] = 10;
     powerboard->send_data_buf[2] = FRAME_TYPE_SET_SUPER_RFID;
     powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
-
+    to_set_super_rfid = super_rfid;
     for(int i = 0; i < 4; i++)
     {
         if(to_set_super_rfid.size() == 4)
@@ -357,10 +357,10 @@ begin:
             ROS_ERROR("to_set_super_rfid.size() is not 4 ! !");
         }
     }
-    powerboard->send_data_buf[4]  = '1';
-    powerboard->send_data_buf[5]  = '0';
-    powerboard->send_data_buf[6]  = '5';
-    powerboard->send_data_buf[7]  = '5';
+    //powerboard->send_data_buf[4]  = '1';
+    //powerboard->send_data_buf[5]  = '0';
+    //powerboard->send_data_buf[6]  = '5';
+    //powerboard->send_data_buf[7]  = '5';
 
     powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
     powerboard->send_data_buf[9] = PROTOCOL_TAIL;
@@ -694,6 +694,11 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                                 //unlock(sys_powerboard);                    
                             }
                         }
+                        if(pw == super_password)
+                        {
+                            status = 0;
+                            ROS_WARN("get right super password");
+                        }
                         //pub_info_to_agent(3,pw ,status);
                         pub_to_agent_t tmp;
                         tmp.type = 3;
@@ -738,6 +743,11 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                                 //unlock(sys_powerboard);                    
 
                             }
+                        }
+                        if(rfid == super_rfid)
+                        {
+                            status = 0;
+                            ROS_WARN("get right super RFID");
                         }
                         //pub_info_to_agent(2,rfid, status);
                         pub_to_agent_t tmp;

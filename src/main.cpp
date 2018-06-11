@@ -22,6 +22,7 @@
 extern  std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
 extern std::string get_table_super_pw_to_ram(sqlite3 *db, std::string table);
 extern std::string get_table_super_rfid_to_ram(sqlite3 *db, std::string table);
+extern int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
 
 class NoahPowerboard;
 void sigintHandler(int sig)
@@ -137,7 +138,9 @@ int main(int argc, char **argv)
         //update_db_by_rfid(db, table_pivas, (*it).rfid,(*it).password,(*it).worker_id,(*it).door_id);
     }
 
-    insert_super_into_db(db, table_super_rfid_pw, "9999", "3333");
+    //insert_super_into_db(db, table_super_rfid_pw, "1050", "3333");
+    update_super_into_db(db, table_super_rfid_pw, "1050", "3333");
+
     sql = "SELECT * FROM PIVAS";
     sqlite3_exec(db,sql.data(),sqlite_test_callback,0,&err_msg);
 
@@ -155,13 +158,13 @@ int main(int argc, char **argv)
         ROS_INFO("get door id by rfid in databases : %d",*it);
     }
 
-    for(int i = 0; i < 20; i++)
+    for(int i = 0; i < 7; i++)
     {
-        update_db_by_rfid(db, table_pivas, std::to_string(1046 + i), "3333", 10, 100);
+        update_db_by_rfid(db, table_pivas, std::to_string(1046 + i), "3333", 10, 1);
     }
 
 
-    update_db_by_rfid(db, table_pivas, "1059","1911",11,101);
+    update_db_by_rfid(db, table_pivas, "1059","1911",11,1);
 
 
     lock_match_db_vec = get_table_pivas_to_ram(db, table_pivas);
