@@ -2,6 +2,7 @@
 #include "std_msgs/String.h"
 #include "json.hpp"
 #include <sqlite3.h>
+#include <time.h>
 
 using json = nlohmann::json;
 #ifndef LED_H
@@ -485,7 +486,7 @@ class NoahPowerboard
         int get_lock_version(powerboard_t *powerboard);
         int set_super_pw(powerboard_t *powerboard);
         int set_super_rfid(powerboard_t *powerboard);
-        void pub_info_to_agent(uint8_t type, std::string data, uint8_t status);
+        void pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t);
 
     private:
         uint8_t CalCheckSum(uint8_t *data, uint8_t len);
@@ -526,6 +527,9 @@ extern int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid,
 extern std::vector<lock_pivas_t> get_table_pivas_to_ram(sqlite3 *db, std::string table);
 extern int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id);
 extern int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
+extern  std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
+extern std::string get_table_super_pw_to_ram(sqlite3 *db, std::string table);
+extern std::string get_table_super_rfid_to_ram(sqlite3 *db, std::string table);
 
 
 extern std::vector<lock_pivas_t> lock_match_db_vec;

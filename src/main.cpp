@@ -86,10 +86,10 @@ int main(int argc, char **argv)
     sqlite3_exec(db_,sql.data(),sqlite_test_callback,0,&err_msg);
 
     //ROS_INFO("max uid: %d",get_max_uid(db_,));
-    std::vector<int> door_id_pw_test =  get_door_id_by_pw(db_, "11");
-    for(std::vector<int>::iterator it = door_id_pw_test.begin(); it != door_id_pw_test.end(); it++)
+    //std::vector<int> door_id_pw_test =  get_door_id_by_pw(db_, "11");
+    //for(std::vector<int>::iterator it = door_id_pw_test.begin(); it != door_id_pw_test.end(); it++)
     {
-        ROS_INFO("get door id by password in databases : %d",*it);
+        //ROS_INFO("get door id by password in databases : %d",*it);
     }
 
 

@@ -20,7 +20,6 @@
 #include "sstream"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include <time.h>
 #include <algorithm>
 #include <smart_lock.h>
 
@@ -65,7 +64,7 @@ std::vector<pub_to_agent_t> pub_to_agent_vector;	//boost::mutex::scoped_lock()
 //std::vector<uint8_t> lock_serials_vector;	//boost::mutex::scoped_lock()
 std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
 
-std::string to_set_super_pw = "5555";
+std::string to_set_super_pw = "6666";
 std::string to_set_super_rfid =  "0000";
 
 std::string set_super_pw_ack;
@@ -78,11 +77,10 @@ std::string super_rfid;
 std::string super_password;
 
 
-void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t status)
+void NoahPowerboard::pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t)
 {
     json j;
-    time_t t;
-    static int uuid = 0;
+    //time_t t;
     struct tm *my_tm;
     struct tm *t2;
     char buf[128] = {0};
@@ -93,10 +91,8 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
     sprintf(buf, "%04d%02d%02d  %02d:%02d:%02d", t2->tm_year + 1900, t2->tm_mon + 1, t2->tm_mday, t2->tm_hour, t2->tm_min, t2->tm_sec);
     ROS_INFO("%s\n", buf);              
 #else
-    time(&t);
 
 #endif
-    uuid++;
     std::string uuid_str = std::to_string(uuid);
     j.clear();
     j =
@@ -123,11 +119,10 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
     ss.clear();
     ss << j;
     pub_json_msg.data = ss.str();
-    for(uint8_t i = 0; i < 3; i++)
+    //for(uint8_t i = 0; i < 3; i++)
     {
         pub_to_agent.publish(pub_json_msg);
-        //usleep(2000*1000);
-        usleep(300*1000);
+        //usleep(300*1000);
     }
 }
 //extern NoahPowerboard  powerboard;
@@ -143,45 +138,77 @@ int NoahPowerboard::PowerboardParamInit(void)
     return 0;
 }
 
-
+#define SEND_TO_AGENT_CNT           3
+#define SEND_TO_AGENT_PERIOD        500    //unit: ms 
+#define AGENT_THREAD_HZ             50    //unit: ms 
 void *agent_protocol_process(void* arg)
 {
     NoahPowerboard *pNoahPowerboard =  (NoahPowerboard*)arg; 
     while(ros::ok())
     {
-        uint8_t type;
-        uint8_t result;
-        std::string code;
-        bool is_need_to_pub = false;
+        static uint8_t type;
+        static uint8_t result;
+        static std::string code;
+        static long long uuid = 0;
+        static time_t t;
+        static bool is_need_to_pub = false;
+        static bool is_pub_complete = true;
         do
         {
             boost::mutex::scoped_lock(mtx_agent);
             if(!pub_to_agent_vector.empty())
             {
-                auto a = pub_to_agent_vector.begin();
-                type = (*a).type;
-                result =(*a).result;
-                code = (*a).code;
-                if((type > 0) && (type < 4))
+                if(is_pub_complete == true)
                 {
-                    pub_to_agent_vector.erase(a);
-                    is_need_to_pub = true;
+                    auto a = pub_to_agent_vector.begin();
+                    type = (*a).type;
+                    result =(*a).result;
+                    code = (*a).code;
+                    time(&t);
+                    uuid++;
+                    //if((type > 0) && (type < 4))
+                    {
+                        pub_to_agent_vector.erase(a);
+                        is_need_to_pub = true;
+                        is_pub_complete = false;
+                    }
                 }
             }
-        }
-        while(0);
+        }while(0);
+        
         if(is_need_to_pub == true)
         {
-            pNoahPowerboard->pub_info_to_agent(type, code, result);
+            static int time_cnt = 0;
+            static int send_cnt = 0;
+            if(time_cnt % ((SEND_TO_AGENT_PERIOD*AGENT_THREAD_HZ) / 1000) == 0)
+            {
+                pNoahPowerboard->pub_info_to_agent(uuid, type, code, result,t);
+                send_cnt++;
+                if(send_cnt >= SEND_TO_AGENT_CNT)
+                {
+                    is_need_to_pub = false; 
+                    is_pub_complete = true;
+                    send_cnt = 0;
+                }
+            }
+            time_cnt++;
         }
 
-        usleep(50*1000);
+        usleep((1000/AGENT_THREAD_HZ) * 1000);
     }
 }
 void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 {
     ROS_INFO("%s",__func__);
     auto j = json::parse(msg->data.c_str());
+    long long  uuid;
+    std::string uuid_str;
+    if(j.find("uuid") != j.end())
+    {
+        uuid_str = j["uuid"];
+        uuid = std::atoi(uuid_str.data());
+        ROS_INFO("get uuid: %lld",uuid);
+    }
     if(j.find("pub_name") != j.end())
     {
         if(j["pub_name"] == "container_super_password")
@@ -194,6 +221,47 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
                 ROS_WARN("get box num : %d, password is %s", box_num, password.data());
                 update_super_into_db(db_, table_super_rfid_pw, rfid, password);
 
+                super_rfid = get_table_super_rfid_to_ram(db_, table_super_rfid_pw); //need to add mutex
+                super_password = get_table_super_pw_to_ram(db_, table_super_rfid_pw); //need to add mutex
+
+                json j_ack;
+                j_ack.clear();
+                j_ack =     //ack operation successfull
+                {
+                    {"sub_name","container_super_password"},
+                    "data",
+                    {
+                        {"result", 1},
+                    }
+                };
+                std_msgs::String pub_json_msg;
+                std::stringstream ss;
+                ss.clear();
+                ss << j_ack;
+                pub_json_msg.data = ss.str();
+                pub_to_agent.publish(pub_json_msg);
+            }
+            else
+            {
+                std::string  j_str = j.dump();
+                ROS_ERROR("Parse Json data ERROR  : %s ",j_str.data());
+
+                json j_ack;
+                j_ack.clear();
+                j_ack =     //ack operation failed 
+                {
+                    {"sub_name","container_super_password"},
+                    "data",
+                    {
+                        {"result", 1},
+                    }
+                };
+                std_msgs::String pub_json_msg;
+                std::stringstream ss;
+                ss.clear();
+                ss << j_ack;
+                pub_json_msg.data = ss.str();
+                pub_to_agent.publish(pub_json_msg);
             }
 
         }
@@ -201,11 +269,12 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
         {
             ROS_INFO("get binding_credit_card_employees . . .");
             delete_all_db_data(db_, table_pivas);
-
+            bool get_door_id = false;
             for(int i = 0; i < 32; i++) 
             {
                 if(j["data"].find(std::to_string(i)) != j["data"].end())
                 {
+                    get_door_id = true;
                     std::vector<int> worker_id_vec = j["data"][std::to_string(i)];
                     int worker_id;
                     ROS_INFO(" get door id : %d ",i);
@@ -218,7 +287,47 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
                         //update_db_by_door_id(db_, table_pivas, rfid, password,  worker_id, i);
                         insert_into_db(db_, table_pivas,rfid, password, worker_id, i);
                     }
+                    lock_match_db_vec.clear();
+                    lock_match_db_vec = get_table_pivas_to_ram(db_, table_pivas);       //need to add mutex
                 }
+            }
+            if(get_door_id == true)
+            {
+                json j_ack;
+                j_ack.clear();
+                j_ack =     //ack operation failed 
+                {
+                    {"sub_name","binding_credit_card_employees"},
+                    "data",
+                    {
+                        {"result", 1},
+                    }
+                };
+                std_msgs::String pub_json_msg;
+                std::stringstream ss;
+                ss.clear();
+                ss << j_ack;
+                pub_json_msg.data = ss.str();
+                pub_to_agent.publish(pub_json_msg);
+            }
+            else
+            {
+                json j_ack;
+                j_ack.clear();
+                j_ack =     //ack operation failed 
+                {
+                    {"sub_name","binding_credit_card_employees"},
+                    "data",
+                    {
+                        {"result", 0},
+                    }
+                };
+                std_msgs::String pub_json_msg;
+                std::stringstream ss;
+                ss.clear();
+                ss << j_ack;
+                pub_json_msg.data = ss.str();
+                pub_to_agent.publish(pub_json_msg);
             }
         }
 
