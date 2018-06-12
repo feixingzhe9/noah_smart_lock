@@ -392,6 +392,7 @@ class NoahPowerboard
         {
             noah_powerboard_pub = n.advertise<std_msgs::String>("tx_noah_powerboard_node",1000);
             pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
+            sub_from_agent = n.subscribe("agent_pub", 1000, &NoahPowerboard::sub_from_agent_callback, this);
             //lock_match_db.clear();
 #if 0
             lock_match_tmp.lock_id = 1;
@@ -492,9 +493,11 @@ class NoahPowerboard
         ros::NodeHandle n;
         ros::Publisher noah_powerboard_pub;
         ros::Publisher pub_to_agent;
+        ros::Subscriber sub_from_agent;
         ros::Subscriber noah_powerboard_sub;
         json j;
         void pub_json_msg_to_app(const nlohmann::json j_msg);
+        void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
 
         lock_pivas_t lock_match_tmp;
 
@@ -510,7 +513,7 @@ int open_com_device(char *dev);
 
 extern std::string table_pivas;
 extern std::string table_super_rfid_pw;
-
+extern sqlite3 *db_;
 extern sqlite3*  open_db(void);
 extern int create_table(sqlite3 *db);
 extern int delete_all_db_data(sqlite3 *db, std::string table);
@@ -521,10 +524,14 @@ extern int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::
 extern int update_db_by_rfid(sqlite3 *db,std::string table, std::string rfid, std::string pw, int work_id, int door_id);
 extern int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
 extern std::vector<lock_pivas_t> get_table_pivas_to_ram(sqlite3 *db, std::string table);
+extern int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id);
+extern int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
+
 
 extern std::vector<lock_pivas_t> lock_match_db_vec;
 extern std::string super_rfid;
 extern std::string super_password;
+
 #endif
 
 

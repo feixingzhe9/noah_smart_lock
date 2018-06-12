@@ -112,6 +112,7 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
                 {"code",data.data()},
                 {"time", t * 1000},
                 {"result", status},
+                //{"array",{1,2,3,4,5,6}},
             }
         }
 
@@ -126,7 +127,7 @@ void NoahPowerboard::pub_info_to_agent(uint8_t type, std::string data, uint8_t s
     {
         pub_to_agent.publish(pub_json_msg);
         //usleep(2000*1000);
-        usleep(500*1000);
+        usleep(300*1000);
     }
 }
 //extern NoahPowerboard  powerboard;
@@ -174,10 +175,55 @@ void *agent_protocol_process(void* arg)
             pNoahPowerboard->pub_info_to_agent(type, code, result);
         }
 
-        usleep(100*1000);
+        usleep(50*1000);
     }
 }
+void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
+{
+    ROS_INFO("%s",__func__);
+    auto j = json::parse(msg->data.c_str());
+    if(j.find("pub_name") != j.end())
+    {
+        if(j["pub_name"] == "container_super_password")
+        {
+            if(j["data"].find("boxNum") != j["data"].end() && j["data"].find("password") != j["data"].end())
+            {
+                int box_num = j["data"]["boxNum"];
+                std::string password = j["data"]["password"];
+                std::string rfid = password;
+                ROS_WARN("get box num : %d, password is %s", box_num, password.data());
+                update_super_into_db(db_, table_super_rfid_pw, rfid, password);
 
+            }
+
+        }
+        if(j["pub_name"] == "binding_credit_card_employees")
+        {
+            ROS_INFO("get binding_credit_card_employees . . .");
+            delete_all_db_data(db_, table_pivas);
+
+            for(int i = 0; i < 32; i++) 
+            {
+                if(j["data"].find(std::to_string(i)) != j["data"].end())
+                {
+                    std::vector<int> worker_id_vec = j["data"][std::to_string(i)];
+                    int worker_id;
+                    ROS_INFO(" get door id : %d ",i);
+                    for(std::vector<int>::iterator it = worker_id_vec.begin(); it != worker_id_vec.end(); it++)
+                    {
+                        worker_id = (*it);
+                        ROS_INFO("worker id : %d",worker_id);
+                        std::string rfid = std::to_string(worker_id);
+                        std::string password = std::to_string(worker_id);
+                        //update_db_by_door_id(db_, table_pivas, rfid, password,  worker_id, i);
+                        insert_into_db(db_, table_pivas,rfid, password, worker_id, i);
+                    }
+                }
+            }
+        }
+
+    }
+}
 int NoahPowerboard::send_serial_data(powerboard_t *sys)
 {
     boost::mutex io_mutex;
