@@ -175,7 +175,7 @@ void *agent_protocol_process(void* arg)
                 }
             }
         }while(0);
-        
+
         if(is_need_to_pub == true)
         {
             static int time_cnt = 0;
@@ -213,10 +213,12 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
     {
         if(j["pub_name"] == "container_super_password")
         {
-            if(j["data"].find("boxNum") != j["data"].end() && j["data"].find("password") != j["data"].end())
+            ROS_WARN("get container_super_password");
+            if(j.find("passwords") != j.end()/* && j["passwords"].find("passwords") != j["password"].end()*/)
             {
-                int box_num = j["data"]["boxNum"];
-                std::string password = j["data"]["password"];
+                ROS_WARN("get passwords");
+                int box_num = j["passwords"][0]["boxNum"];
+                std::string password = j["passwords"][0]["password"];
                 std::string rfid = password;
                 ROS_WARN("get box num : %d, password is %s", box_num, password.data());
                 update_super_into_db(db_, table_super_rfid_pw, rfid, password);
@@ -227,12 +229,23 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
                 json j_ack;
                 j_ack.clear();
                 j_ack =     //ack operation successfull
+
                 {
+                    {"uuid",uuid_str.data()},
                     {"sub_name","container_super_password"},
-                    "data",
+
                     {
-                        {"result", 1},
+                        "data",
+                        {
+                            //{"type", type},
+
+                            //{"code",data.data()},
+                            //{"time", t * 1000},
+                            {"result", 1},
+                            //{"array",{1,2,3,4,5,6}},
+                        }
                     }
+
                 };
                 std_msgs::String pub_json_msg;
                 std::stringstream ss;
@@ -248,6 +261,7 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
 
                 json j_ack;
                 j_ack.clear();
+#if 0
                 j_ack =     //ack operation failed 
                 {
                     {"sub_name","container_super_password"},
@@ -256,6 +270,32 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
                         {"result", 1},
                     }
                 };
+#endif
+
+#if 1
+
+#if 1
+
+                j_ack =
+                {
+                    //{"uuid","1111"},
+                    {"sub_name","container_super_password"},
+
+                    {
+                        "data",
+                        {
+                            //{"type", type},
+
+                            //{"code",data.data()},
+                            //{"time", t * 1000},
+                            {"result", 0},
+                            //{"array",{1,2,3,4,5,6}},
+                        }
+                    }
+
+                };
+#endif
+#endif
                 std_msgs::String pub_json_msg;
                 std::stringstream ss;
                 ss.clear();
@@ -293,16 +333,46 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
             }
             if(get_door_id == true)
             {
+                time_t t;
+                time(&t);
                 json j_ack;
                 j_ack.clear();
+#if 0
                 j_ack =     //ack operation failed 
                 {
+                    {"uuid",uuid_str.data()},
                     {"sub_name","binding_credit_card_employees"},
-                    "data",
+
                     {
-                        {"result", 1},
+                        "data",
+                        {
+                            {"result", 1},
+                            {"time", t * 1000},
+                        }
                     }
                 };
+#endif
+#if 1
+
+                j_ack =
+                {
+                    {"uuid",uuid_str.data()},
+                    {"sub_name","binding_credit_card_employees"},
+
+                    {
+                        "data",
+                        {
+                            //{"type", type},
+
+                            //{"code",data.data()},
+                            //{"time", t * 1000},
+                            {"result", 1},
+                            //{"array",{1,2,3,4,5,6}},
+                        }
+                    }
+
+                };
+#endif
                 std_msgs::String pub_json_msg;
                 std::stringstream ss;
                 ss.clear();
