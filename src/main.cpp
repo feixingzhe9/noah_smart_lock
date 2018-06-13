@@ -115,9 +115,25 @@ int main(int argc, char **argv)
     }
 
     super_rfid = get_table_super_rfid_to_ram(db_, table_super_rfid_pw);
-    ROS_INFO("super rfid : %s",super_rfid.data());
+    if(super_rfid.size() != 4)
+    {
+        super_rfid = "1055";	
+        ROS_ERROR("NO data in database, using default super rfid: %s",super_rfid.data());
+    }
+    else
+    {
+        ROS_INFO("super rfid : %s",super_rfid.data());
+    }
     super_password = get_table_super_pw_to_ram(db_, table_super_rfid_pw);
-    ROS_INFO("super password : %s",super_password.data());
+    if(super_password.size() != 4)
+    {
+        super_password = "1055";	
+        ROS_ERROR("NO data in database, using default super password: %s",super_password.data());
+    }
+    else
+    {
+        ROS_INFO("super password : %s",super_password.data());
+    }
     //sqlite3_close(db_); //关闭数据库
 
 #endif
@@ -149,7 +165,7 @@ int main(int argc, char **argv)
         }
         if(get_agent_info_flag == false)
         {
-            
+
         }
         cnt++;
         powerboard->handle_receive_data(sys_powerboard);

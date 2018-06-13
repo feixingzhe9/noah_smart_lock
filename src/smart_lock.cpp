@@ -73,8 +73,8 @@ std::string set_super_rfid_ack;
 
 
 std::vector<lock_pivas_t> lock_match_db_vec;
-std::string super_rfid;
-std::string super_password;
+std::string super_rfid = "1050";
+std::string super_password = "1050";
 
 
 void NoahPowerboard::pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t)
@@ -462,24 +462,39 @@ int NoahPowerboard::unlock(powerboard_t *powerboard)     // done
 {
 begin:
     static uint8_t err_cnt = 0;
-
-    uint8_t lock_num = 1;
+    int lock_bit = 0;
     int error = -1;
     ROS_WARN("start to unlock ...");
-#if 0
+#if 1
     do
     {
-        boost::mutex::scoped_lock(tmx_smart_lock);
-        lock_num = to_unlock_serials.size();
-        powerboard->send_data_buf[0] = PROTOCOL_HEAD;
-        powerboard->send_data_buf[1] = lock_num + 6;
+        //boost::mutex::scoped_lock(tmx_smart_lock);
+        //lock_num = to_unlock_serials.size();
+        //powerboard->send_data_buf[0] = PROTOCOL_HEAD;
+        powerboard->send_data_buf[0] = 0x5A;
+        powerboard->send_data_buf[1] =  0x0A;
         powerboard->send_data_buf[2] = FRAME_TYPE_UNLOCK;
         powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
-        for(uint8_t i = 0; i < lock_num; i++)
+        for(std::vector<int>::iterator it = to_unlock_serials.begin(); it != to_unlock_serials.end(); it++)
         {
-            powerboard->send_data_buf[4 + i]  = to_unlock_serials[i];
+            if((*it) <= 32)
+            {
+                lock_bit |= 1<<((*it) - 1);
+            }
         }
+#if 1
+        powerboard->send_data_buf[4]  = (uint8_t)(lock_bit) & 0xff;
+        powerboard->send_data_buf[5]  = (uint8_t)(lock_bit>>8) & 0xff ;
+        powerboard->send_data_buf[6]  = (uint8_t)(lock_bit>>16) & 0xff;
+        powerboard->send_data_buf[7]  = (uint8_t)(lock_bit>>24) & 0xff;
+#else
+        powerboard->send_data_buf[4]  = 3;
+        powerboard->send_data_buf[5]  = 0;
+        powerboard->send_data_buf[6]  = 0;
+        powerboard->send_data_buf[7]  = 0;
+#endif
         to_unlock_serials.clear();
+
     }while(0);
 #else
 
@@ -490,8 +505,8 @@ begin:
     powerboard->send_data_buf[4]  = 1;
 
 #endif
-    powerboard->send_data_buf[lock_num + 4] = this->CalCheckSum(powerboard->send_data_buf, lock_num + 4);
-    powerboard->send_data_buf[lock_num + 5] = PROTOCOL_TAIL;
+    powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
+    powerboard->send_data_buf[9] = PROTOCOL_TAIL;
     to_unlock_serials.clear();
     this->send_serial_data(powerboard);
     usleep(TEST_WAIT_TIME);
@@ -767,10 +782,10 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
     check_data += 0xcc;
     if(check_data != frame_buf[frame_len-2] || PROTOCOL_TAIL != frame_buf[frame_len -1])
     {
-        PowerboardInfo("led receive frame check error");
+        PowerboardInfo("smart lock receive frame check error");
         //return -1;
     }
-    PowerboardInfo("Powrboard recieve data check OK.");
+    PowerboardInfo("smart lock recieve data check OK.");
 
     cmd_type = frame_buf[2];
     data_direction = frame_buf[3];
@@ -791,6 +806,7 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
 
                         ROS_WARN("UNLOCK : receive ack data from lock."); 
                         //lock_serials_status
+#if 0
                         for(uint8_t i = 0; i < (data_len -6)/2; i++)
                         {
                             single_status.lock_id = frame_buf[4+i*2];
@@ -831,6 +847,27 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
 
                             lock_serials_status_ack.push_back(single_status);
                         }
+#else
+                        int lock_status_bit = 0;
+                        lock_status_bit += frame_buf[4];
+                        lock_status_bit += frame_buf[5] << 8;
+                        lock_status_bit += frame_buf[6] << 16;
+                        lock_status_bit += frame_buf[7] << 24;
+                        ROS_INFO("lock status bit : %d",lock_status_bit);
+                        lock_serials_status.clear();
+                        for(int j = 0; j < 32; j++)
+                        {
+                            single_status.lock_id = j + 1;
+                            single_status.status = 0; 
+                            if(lock_status_bit & (1<<j))
+                            {
+                                ROS_INFO("lock %d status is on", j + 1);
+                                single_status.status = 1; 
+                            }
+                            lock_serials_status.push_back(single_status);
+                        }
+
+#endif
                         for(std::vector<lock_serials_stauts_t>::iterator my_iterator = lock_serials_status.begin() ;\
                                 my_iterator != lock_serials_status.end(); my_iterator++)
                         {
@@ -910,7 +947,7 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                                 do
                                 {
                                     boost::mutex::scoped_lock(tmx_smart_lock);
-                                    to_unlock_serials.clear();
+                                    //to_unlock_serials.clear();
                                     //to_unlock_serials.push_back((*it).lock_id);
                                     to_unlock_serials.push_back((*it).door_id);
                                 }while(0);
@@ -918,6 +955,8 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                                 //unlock(sys_powerboard);                    
                             }
                         }
+                        std::sort(to_unlock_serials.begin(),to_unlock_serials.end());
+                        to_unlock_serials.erase(unique(to_unlock_serials.begin(), to_unlock_serials.end()), to_unlock_serials.end());
                         if(pw == super_password)
                         {
                             status = 0;
@@ -954,20 +993,24 @@ int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf
                             if((*it).rfid == rfid)
                             {
                                 ROS_INFO("get right RFID  ID");
-                                to_unlock_serials.clear();
+                                //to_unlock_serials.clear();
                                 to_unlock_serials.push_back((*it).door_id);
                                 status = 0;
                                 do
                                 {
                                     boost::mutex::scoped_lock(tmx_smart_lock);
-                                    to_unlock_serials.clear();
-                                    //to_unlock_serials.push_back((*it).lock_id);
-                                    to_unlock_serials.push_back(1);
+                                    //to_unlock_serials.clear();
+                                    to_unlock_serials.push_back((*it).door_id);
+                                    //to_unlock_serials.push_back(1);
                                 }while(0);
                                 //unlock(sys_powerboard);                    
 
                             }
                         }
+
+                        std::sort(to_unlock_serials.begin(),to_unlock_serials.end());
+                        to_unlock_serials.erase(unique(to_unlock_serials.begin(), to_unlock_serials.end()), to_unlock_serials.end());
+
                         if(rfid == super_rfid)
                         {
                             status = 0;
