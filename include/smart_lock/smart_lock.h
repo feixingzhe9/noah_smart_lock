@@ -515,6 +515,8 @@ int open_com_device(char *dev);
 extern std::string table_pivas;
 extern std::string table_super_rfid_pw;
 extern sqlite3 *db_;
+extern bool is_need_update_rfid_pw;
+
 extern sqlite3*  open_db(void);
 extern int create_table(sqlite3 *db);
 extern int delete_all_db_data(sqlite3 *db, std::string table);

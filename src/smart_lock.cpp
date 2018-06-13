@@ -99,7 +99,6 @@ void NoahPowerboard::pub_info_to_agent(long long uuid, uint8_t type, std::string
     {
         {"uuid",uuid_str.data()},
         {"sub_name","smart_lock_notice"},
-
         {
             "data",
             {
@@ -199,7 +198,7 @@ void *agent_protocol_process(void* arg)
 }
 void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 {
-    ROS_INFO("%s",__func__);
+    //ROS_INFO("%s",__func__);
     auto j = json::parse(msg->data.c_str());
     long long  uuid;
     std::string uuid_str;
@@ -207,7 +206,7 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
     {
         uuid_str = j["uuid"];
         uuid = std::atoi(uuid_str.data());
-        ROS_INFO("get uuid: %lld",uuid);
+        //ROS_INFO("get uuid: %lld",uuid);
     }
     if(j.find("pub_name") != j.end())
     {
@@ -225,7 +224,7 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
 
                 super_rfid = get_table_super_rfid_to_ram(db_, table_super_rfid_pw); //need to add mutex
                 super_password = get_table_super_pw_to_ram(db_, table_super_rfid_pw); //need to add mutex
-
+                is_need_update_rfid_pw = true;
                 json j_ack;
                 j_ack.clear();
                 j_ack =     //ack operation successfull
@@ -564,7 +563,7 @@ begin:
     static uint8_t err_cnt = 0;
 
     int error = -1;
-    ROS_WARN("start to set super pass word ...");
+    ROS_WARN("start to set super RFID ...");
 
     powerboard->send_data_buf[0] = 0x5A;
     powerboard->send_data_buf[1] = 10;

@@ -13,17 +13,11 @@
 #include <vector>
 #include <pthread.h>
 #include <smart_lock.h>
-
 #include <sqlite3.h>
 
-//#include "../include/smart_lock/sqlite3.h"
-//#include <sqlite3.h>
-
-extern  std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
-extern std::string get_table_super_pw_to_ram(sqlite3 *db, std::string table);
-extern std::string get_table_super_rfid_to_ram(sqlite3 *db, std::string table);
-extern int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
+bool is_need_update_rfid_pw = true;
 sqlite3 *db_;
+
 class NoahPowerboard;
 void sigintHandler(int sig)
 {
@@ -134,13 +128,24 @@ int main(int argc, char **argv)
         if(init_flag == false)
         {
             usleep(100*1000);
-            powerboard->get_lock_version(sys_powerboard);//test 
+            powerboard->get_lock_version(sys_powerboard);
             init_flag = true;
 
-            sleep(2);
-            powerboard->set_super_pw(sys_powerboard);//test 
-            sleep(2);
-            powerboard->set_super_rfid(sys_powerboard);//test 
+        }
+        if(is_need_update_rfid_pw == true)
+        {
+            static int time_cnt = 0;
+            if(time_cnt == 40)
+            {
+                powerboard->set_super_pw(sys_powerboard);
+            }
+            if(time_cnt == 80)
+            {
+                powerboard->set_super_rfid(sys_powerboard);
+                is_need_update_rfid_pw = false;
+                time_cnt = 0;
+            }
+            time_cnt++;
         }
         if(get_agent_info_flag == false)
         {
