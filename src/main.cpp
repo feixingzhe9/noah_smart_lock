@@ -37,6 +37,9 @@ static int sqlite_test_callback(void *NotUsed, int argc, char **argv, char **azC
 }
 int main(int argc, char **argv)
 {
+
+    //system("shutdown now");
+    //system("echo \'kaka\' | sudo -S sh -c \' shutdown now\'");
     ros::init(argc, argv, "noah_powerboard_node");
     //NoahPowerboard  powerboard;
     NoahPowerboard *powerboard = new NoahPowerboard();
@@ -79,27 +82,6 @@ int main(int argc, char **argv)
     sql = "SELECT * FROM PIVAS";
     sqlite3_exec(db_,sql.data(),sqlite_test_callback,0,&err_msg);
 
-    //ROS_INFO("max uid: %d",get_max_uid(db_,));
-    //std::vector<int> door_id_pw_test =  get_door_id_by_pw(db_, "11");
-    //for(std::vector<int>::iterator it = door_id_pw_test.begin(); it != door_id_pw_test.end(); it++)
-    {
-        //ROS_INFO("get door id by password in databases : %d",*it);
-    }
-
-
-    //std::vector<int> door_id_rfid_test =  get_door_id_by_rfid(db_, "1055");
-    //for(std::vector<int>::iterator it = door_id_rfid_test.begin(); it != door_id_rfid_test.end(); it++)
-    {
-        //ROS_INFO("get door id by rfid in databases : %d",*it);
-    }
-
-    //for(int i = 0; i < 7; i++)
-    {
-        //update_db_by_rfid(db_, table_pivas, std::to_string(1046 + i), "3333", 10, 1);
-    }
-
-
-    //update_db_by_rfid(db_, table_pivas, "1059","1911",11,1);
 
 
     lock_match_db_vec = get_table_pivas_to_ram(db_, table_pivas);

@@ -46,7 +46,10 @@ sqlite3*  open_db(void)
         sqlite3_close(db);
         return NULL;
     }
-    else printf("You have opened a sqlite3 database named pw_rfid.db successfully!/nCongratulations! Have fun !  ^-^ /n");
+    else 
+    {
+        ROS_INFO(" opened or created a sqlite3 database named pw_rfid.db successfully");
+    }
 
     return db;
 
@@ -55,13 +58,6 @@ int create_table(sqlite3 *db)
 {
     std::string sql;
     char *err_msg;
-    //sql = "CREATE TABLE COMPANY("  \
-    "ID INT PRIMARY KEY     NOT NULL," \
-        "NAME           TEXT    NOT NULL," \
-        "AGE            INT     NOT NULL," \
-        "ADDRESS        CHAR(50)," \
-        "SALARY         REAL );";
-    //sql = "CREATE TABLE COMPANY(ID INT PRIMARY KEY NOT NULL,   NAME TEXT NOT NULL,  AGE INT  NOT NULL,  ADDRESS CHAR(50),   SALARY REAL);";
     sql = "CREATE TABLE " + table_pivas + "(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);";
     sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
 
