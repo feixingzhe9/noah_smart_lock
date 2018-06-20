@@ -148,10 +148,10 @@ class SmartLock
         int handle_receive_data(smart_lock_t *sys);
 
 
-        int unlock(smart_lock_t *powerboard);  
-        int get_lock_version(smart_lock_t *powerboard);
-        int set_super_pw(smart_lock_t *powerboard);
-        int set_super_rfid(smart_lock_t *powerboard);
+        int unlock(smart_lock_t *smart_lock);  
+        int get_lock_version(smart_lock_t *smart_lock);
+        int set_super_pw(smart_lock_t *smart_lock);
+        int set_super_rfid(smart_lock_t *smart_lock);
         void pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t);
 
     private:

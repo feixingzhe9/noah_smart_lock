@@ -40,12 +40,12 @@ int main(int argc, char **argv)
 
     //system("shutdown now");
     //system("echo \'kaka\' | sudo -S sh -c \' shutdown now\'");
-    ros::init(argc, argv, "noah_powerboard_node");
+    ros::init(argc, argv, "smart_lock_node");
     //NoahPowerboard  powerboard;
-    SmartLock *powerboard = new SmartLock();
+    SmartLock *smart_lock = new SmartLock();
     ros::Rate loop_rate(20);
     uint32_t cnt = 0;
-    powerboard->PowerboardParamInit();
+    smart_lock->PowerboardParamInit();
 
 #if 1
     sys_smart_lock->device = open_com_device(sys_smart_lock->dev);
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     //pthread_t can_protocol_proc_handle;
     pthread_t agent_protocol_proc_handle;
     //pthread_create(&can_protocol_proc_handle, NULL, uart_protocol_process,(void*)powerboard);
-    pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)powerboard);
+    pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)smart_lock);
     signal(SIGINT, sigintHandler);
 
 
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
         if(init_flag == false)
         {
             usleep(100*1000);
-            powerboard->get_lock_version(sys_smart_lock);
+            smart_lock->get_lock_version(sys_smart_lock);
             init_flag = true;
 
         }
@@ -135,11 +135,11 @@ int main(int argc, char **argv)
             static int time_cnt = 0;
             if(time_cnt == 40)
             {
-                powerboard->set_super_pw(sys_smart_lock);
+                smart_lock->set_super_pw(sys_smart_lock);
             }
             if(time_cnt == 80)
             {
-                powerboard->set_super_rfid(sys_smart_lock);
+                smart_lock->set_super_rfid(sys_smart_lock);
                 is_need_update_rfid_pw = false;
                 time_cnt = 0;
             }
@@ -150,12 +150,12 @@ int main(int argc, char **argv)
 
         }
         cnt++;
-        powerboard->handle_receive_data(sys_smart_lock);
+        smart_lock->handle_receive_data(sys_smart_lock);
 
         if(!to_unlock_serials.empty())
         {
             usleep(50*1000);
-            powerboard->unlock(sys_smart_lock);
+            smart_lock->unlock(sys_smart_lock);
         }
 
         ros::spinOnce();
