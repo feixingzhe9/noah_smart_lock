@@ -629,7 +629,7 @@ void SmartLock::pub_json_msg_to_app( const nlohmann::json j_msg)
     ss.clear();
     ss << j_msg;
     pub_json_msg.data = ss.str();
-    this->noah_powerboard_pub.publish(pub_json_msg);
+    //this->noah_powerboard_pub.publish(pub_json_msg);
 }
 
 int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)

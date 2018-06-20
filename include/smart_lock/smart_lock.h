@@ -138,7 +138,6 @@ class SmartLock
     public:
         SmartLock()
         {
-            noah_powerboard_pub = n.advertise<std_msgs::String>("tx_noah_powerboard_node",1000);
             pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
             sub_from_agent = n.subscribe("agent_pub", 1000, &SmartLock::sub_from_agent_callback, this);
             //lock_match_db.clear();
@@ -159,10 +158,8 @@ class SmartLock
         uint8_t CalCheckSum(uint8_t *data, uint8_t len);
         int handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf);
         ros::NodeHandle n;
-        ros::Publisher noah_powerboard_pub;
         ros::Publisher pub_to_agent;
         ros::Subscriber sub_from_agent;
-        ros::Subscriber noah_powerboard_sub;
         json j;
         void pub_json_msg_to_app(const nlohmann::json j_msg);
         void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
