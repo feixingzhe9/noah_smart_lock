@@ -77,7 +77,7 @@ std::string super_rfid = "1050";
 std::string super_password = "1050";
 
 
-void NoahPowerboard::pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t)
+void SmartLock::pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t)
 {
     json j;
     //time_t t;
@@ -121,7 +121,7 @@ void NoahPowerboard::pub_info_to_agent(long long uuid, uint8_t type, std::string
     pub_to_agent.publish(pub_json_msg);
 }
 
-int NoahPowerboard::PowerboardParamInit(void)
+int SmartLock::PowerboardParamInit(void)
 {
     //char dev_path[] = "/dev/ros/powerboard";
     char dev_path[] = "/dev/ttyS2";
@@ -136,7 +136,7 @@ int NoahPowerboard::PowerboardParamInit(void)
 #define AGENT_THREAD_HZ             50    //unit: ms 
 void *agent_protocol_process(void* arg)
 {
-    NoahPowerboard *pNoahPowerboard =  (NoahPowerboard*)arg; 
+    SmartLock *pSmartLock =  (SmartLock*)arg; 
     while(ros::ok())
     {
         static uint8_t type;
@@ -172,7 +172,7 @@ void *agent_protocol_process(void* arg)
             static int send_cnt = 0;
             if(time_cnt % ((SEND_TO_AGENT_PERIOD*AGENT_THREAD_HZ) / 1000) == 0)
             {
-                pNoahPowerboard->pub_info_to_agent(uuid, type, code, result,t);
+                pSmartLock->pub_info_to_agent(uuid, type, code, result,t);
                 send_cnt++;
                 if(send_cnt >= SEND_TO_AGENT_CNT)
                 {
@@ -187,7 +187,7 @@ void *agent_protocol_process(void* arg)
         usleep((1000/AGENT_THREAD_HZ) * 1000);
     }
 }
-void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
+void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 {
     auto j = json::parse(msg->data.c_str());
     long long  uuid;
@@ -347,7 +347,7 @@ void NoahPowerboard::sub_from_agent_callback(const std_msgs::String::ConstPtr &m
 
     }
 }
-int NoahPowerboard::send_serial_data(powerboard_t *sys)
+int SmartLock::send_serial_data(powerboard_t *sys)
 {
     boost::mutex io_mutex;
     boost::mutex::scoped_lock lock(io_mutex);
@@ -389,7 +389,7 @@ int NoahPowerboard::send_serial_data(powerboard_t *sys)
     }
 }
 
-uint8_t NoahPowerboard::CalCheckSum(uint8_t *data, uint8_t len)
+uint8_t SmartLock::CalCheckSum(uint8_t *data, uint8_t len)
 {
     uint8_t sum = 0;
     for(uint8_t i = 0; i < len; i++)
@@ -402,7 +402,7 @@ uint8_t NoahPowerboard::CalCheckSum(uint8_t *data, uint8_t len)
 
 
 
-int NoahPowerboard::unlock(powerboard_t *powerboard)     // done
+int SmartLock::unlock(powerboard_t *powerboard)     // done
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -441,7 +441,7 @@ begin:
 
 
 
-int NoahPowerboard::set_super_pw(powerboard_t *powerboard)    
+int SmartLock::set_super_pw(powerboard_t *powerboard)    
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -474,7 +474,7 @@ begin:
     return error;
 }
 
-int NoahPowerboard::set_super_rfid(powerboard_t *powerboard)     
+int SmartLock::set_super_rfid(powerboard_t *powerboard)     
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -507,7 +507,7 @@ begin:
     return error;
 }
 
-int NoahPowerboard::get_lock_version(powerboard_t *powerboard)
+int SmartLock::get_lock_version(powerboard_t *powerboard)
 {
     int error = -1;
     powerboard->send_data_buf[0] = 0x5a;
@@ -523,7 +523,7 @@ int NoahPowerboard::get_lock_version(powerboard_t *powerboard)
 
 
 
-int NoahPowerboard::handle_receive_data(powerboard_t *sys)
+int SmartLock::handle_receive_data(powerboard_t *sys)
 {
     int nread = 0;
     int i = 0;
@@ -621,7 +621,7 @@ int NoahPowerboard::handle_receive_data(powerboard_t *sys)
 }
 
 
-void NoahPowerboard::pub_json_msg_to_app( const nlohmann::json j_msg)
+void SmartLock::pub_json_msg_to_app( const nlohmann::json j_msg)
 {
     std_msgs::String pub_json_msg;
     std::stringstream ss;
@@ -632,7 +632,7 @@ void NoahPowerboard::pub_json_msg_to_app( const nlohmann::json j_msg)
     this->noah_powerboard_pub.publish(pub_json_msg);
 }
 
-int NoahPowerboard::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf)
+int SmartLock::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf)
 {
     int frame_len = 0;
     int i = 0;

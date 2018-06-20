@@ -18,7 +18,7 @@
 bool is_need_update_rfid_pw = true;
 sqlite3 *db_;
 
-class NoahPowerboard;
+class SmartLock;
 void sigintHandler(int sig)
 {
     ROS_INFO("killing on exit");
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     //system("echo \'kaka\' | sudo -S sh -c \' shutdown now\'");
     ros::init(argc, argv, "noah_powerboard_node");
     //NoahPowerboard  powerboard;
-    NoahPowerboard *powerboard = new NoahPowerboard();
+    SmartLock *powerboard = new SmartLock();
     ros::Rate loop_rate(20);
     uint32_t cnt = 0;
     powerboard->PowerboardParamInit();

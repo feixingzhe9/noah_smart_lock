@@ -133,14 +133,14 @@ typedef enum
 
 //#define DEV_PATH                "/dev/noah_powerboard"
 extern powerboard_t    *sys_powerboard;
-class NoahPowerboard
+class SmartLock 
 {
     public:
-        NoahPowerboard()
+        SmartLock()
         {
             noah_powerboard_pub = n.advertise<std_msgs::String>("tx_noah_powerboard_node",1000);
             pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
-            sub_from_agent = n.subscribe("agent_pub", 1000, &NoahPowerboard::sub_from_agent_callback, this);
+            sub_from_agent = n.subscribe("agent_pub", 1000, &SmartLock::sub_from_agent_callback, this);
             //lock_match_db.clear();
 
         }
@@ -206,6 +206,5 @@ extern std::string super_rfid;
 extern std::string super_password;
 
 #endif
-
 
 
