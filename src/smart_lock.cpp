@@ -40,8 +40,8 @@ static int led_over_time_flag = 0;
 static int last_unread_bytes = 0;
 static unsigned char recv_buf_last[BUF_LEN] = {0};
 
-smart_lock_t    sys_powerboard_ram; 
-smart_lock_t    *sys_powerboard = &sys_powerboard_ram;
+smart_lock_t    sys_smart_lock_ram; 
+smart_lock_t    *sys_smart_lock = &sys_smart_lock_ram;
 
 
 
@@ -125,9 +125,9 @@ int SmartLock::PowerboardParamInit(void)
 {
     //char dev_path[] = "/dev/ros/powerboard";
     char dev_path[] = "/dev/ttyS2";
-    memcpy(sys_powerboard->dev,dev_path, sizeof(dev_path));
-    sys_powerboard->lock_serials.clear();
-    sys_powerboard->lock_serials.push_back(1);
+    memcpy(sys_smart_lock->dev,dev_path, sizeof(dev_path));
+    sys_smart_lock->lock_serials.clear();
+    sys_smart_lock->lock_serials.push_back(1);
     return 0;
 }
 

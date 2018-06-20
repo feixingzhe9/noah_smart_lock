@@ -48,16 +48,16 @@ int main(int argc, char **argv)
     powerboard->PowerboardParamInit();
 
 #if 1
-    sys_powerboard->device = open_com_device(sys_powerboard->dev);
-    if(sys_powerboard->device < 0 )
+    sys_smart_lock->device = open_com_device(sys_smart_lock->dev);
+    if(sys_smart_lock->device < 0 )
     {
-        ROS_ERROR("Open %s Failed !",sys_powerboard->dev);
+        ROS_ERROR("Open %s Failed !",sys_smart_lock->dev);
     }
     else
     {
-        set_speed(sys_powerboard->device,9600);
-        set_parity(sys_powerboard->device,8,1,'N');  
-        ROS_INFO("Open %s OK.",sys_powerboard->dev);
+        set_speed(sys_smart_lock->device,9600);
+        set_parity(sys_smart_lock->device,8,1,'N');  
+        ROS_INFO("Open %s OK.",sys_smart_lock->dev);
     }
 #endif
     //pthread_t can_protocol_proc_handle;
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
         if(init_flag == false)
         {
             usleep(100*1000);
-            powerboard->get_lock_version(sys_powerboard);
+            powerboard->get_lock_version(sys_smart_lock);
             init_flag = true;
 
         }
@@ -135,11 +135,11 @@ int main(int argc, char **argv)
             static int time_cnt = 0;
             if(time_cnt == 40)
             {
-                powerboard->set_super_pw(sys_powerboard);
+                powerboard->set_super_pw(sys_smart_lock);
             }
             if(time_cnt == 80)
             {
-                powerboard->set_super_rfid(sys_powerboard);
+                powerboard->set_super_rfid(sys_smart_lock);
                 is_need_update_rfid_pw = false;
                 time_cnt = 0;
             }
@@ -150,19 +150,19 @@ int main(int argc, char **argv)
 
         }
         cnt++;
-        powerboard->handle_receive_data(sys_powerboard);
+        powerboard->handle_receive_data(sys_smart_lock);
 
         if(!to_unlock_serials.empty())
         {
             usleep(50*1000);
-            powerboard->unlock(sys_powerboard);
+            powerboard->unlock(sys_smart_lock);
         }
 
         ros::spinOnce();
         loop_rate.sleep();
     }
     //close(fd);
-    if(close(sys_powerboard->device) > 0)
+    if(close(sys_smart_lock->device) > 0)
     {
         // ROS_INFO("Close 
     }
