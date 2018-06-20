@@ -40,8 +40,8 @@ static int led_over_time_flag = 0;
 static int last_unread_bytes = 0;
 static unsigned char recv_buf_last[BUF_LEN] = {0};
 
-powerboard_t    sys_powerboard_ram; 
-powerboard_t    *sys_powerboard = &sys_powerboard_ram;
+smart_lock_t    sys_powerboard_ram; 
+smart_lock_t    *sys_powerboard = &sys_powerboard_ram;
 
 
 
@@ -347,7 +347,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 
     }
 }
-int SmartLock::send_serial_data(powerboard_t *sys)
+int SmartLock::send_serial_data(smart_lock_t *sys)
 {
     boost::mutex io_mutex;
     boost::mutex::scoped_lock lock(io_mutex);
@@ -402,7 +402,7 @@ uint8_t SmartLock::CalCheckSum(uint8_t *data, uint8_t len)
 
 
 
-int SmartLock::unlock(powerboard_t *powerboard)     // done
+int SmartLock::unlock(smart_lock_t *powerboard)     // done
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -441,7 +441,7 @@ begin:
 
 
 
-int SmartLock::set_super_pw(powerboard_t *powerboard)    
+int SmartLock::set_super_pw(smart_lock_t *powerboard)    
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -474,7 +474,7 @@ begin:
     return error;
 }
 
-int SmartLock::set_super_rfid(powerboard_t *powerboard)     
+int SmartLock::set_super_rfid(smart_lock_t *powerboard)     
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -507,7 +507,7 @@ begin:
     return error;
 }
 
-int SmartLock::get_lock_version(powerboard_t *powerboard)
+int SmartLock::get_lock_version(smart_lock_t *powerboard)
 {
     int error = -1;
     powerboard->send_data_buf[0] = 0x5a;
@@ -523,7 +523,7 @@ int SmartLock::get_lock_version(powerboard_t *powerboard)
 
 
 
-int SmartLock::handle_receive_data(powerboard_t *sys)
+int SmartLock::handle_receive_data(smart_lock_t *sys)
 {
     int nread = 0;
     int i = 0;
@@ -632,7 +632,7 @@ void SmartLock::pub_json_msg_to_app( const nlohmann::json j_msg)
     this->noah_powerboard_pub.publish(pub_json_msg);
 }
 
-int SmartLock::handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf)
+int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
 {
     int frame_len = 0;
     int i = 0;

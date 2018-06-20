@@ -114,7 +114,7 @@ typedef struct
 
     std::vector<uint8_t> lock_serials;
     std::vector<lock_serials_stauts_t> lock_serials_status;
-}powerboard_t;
+}smart_lock_t;
 
 typedef enum 
 {
@@ -132,7 +132,7 @@ typedef enum
 }light_mode_t;
 
 //#define DEV_PATH                "/dev/noah_powerboard"
-extern powerboard_t    *sys_powerboard;
+extern smart_lock_t    *sys_powerboard;
 class SmartLock 
 {
     public:
@@ -145,19 +145,19 @@ class SmartLock
 
         }
         int PowerboardParamInit(void);
-        int send_serial_data(powerboard_t *sys);
-        int handle_receive_data(powerboard_t *sys);
+        int send_serial_data(smart_lock_t *sys);
+        int handle_receive_data(smart_lock_t *sys);
 
 
-        int unlock(powerboard_t *powerboard);  
-        int get_lock_version(powerboard_t *powerboard);
-        int set_super_pw(powerboard_t *powerboard);
-        int set_super_rfid(powerboard_t *powerboard);
+        int unlock(smart_lock_t *powerboard);  
+        int get_lock_version(smart_lock_t *powerboard);
+        int set_super_pw(smart_lock_t *powerboard);
+        int set_super_rfid(smart_lock_t *powerboard);
         void pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t);
 
     private:
         uint8_t CalCheckSum(uint8_t *data, uint8_t len);
-        int handle_rev_frame(powerboard_t *sys,unsigned char * frame_buf);
+        int handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf);
         ros::NodeHandle n;
         ros::Publisher noah_powerboard_pub;
         ros::Publisher pub_to_agent;
@@ -171,7 +171,7 @@ class SmartLock
 
 
 };
-int handle_receive_data(powerboard_t *sys);
+int handle_receive_data(smart_lock_t *sys);
 void *uart_protocol_process(void* arg);
 void *agent_protocol_process(void* arg);
 void set_speed(int fd, int speed);
