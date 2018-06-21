@@ -131,7 +131,6 @@ typedef enum
     LIGHTS_MODE_SETTING                 = 0xff,
 }light_mode_t;
 
-//#define DEV_PATH                "/dev/noah_powerboard"
 extern smart_lock_t    *sys_smart_lock;
 class SmartLock 
 {

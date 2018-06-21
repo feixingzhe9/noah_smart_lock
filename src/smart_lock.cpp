@@ -123,7 +123,6 @@ void SmartLock::pub_info_to_agent(long long uuid, uint8_t type, std::string data
 
 int SmartLock::PowerboardParamInit(void)
 {
-    //char dev_path[] = "/dev/ros/powerboard";
     char dev_path[] = "/dev/ttyS2";
     memcpy(sys_smart_lock->dev,dev_path, sizeof(dev_path));
     sys_smart_lock->lock_serials.clear();
@@ -402,7 +401,7 @@ uint8_t SmartLock::CalCheckSum(uint8_t *data, uint8_t len)
 
 
 
-int SmartLock::unlock(smart_lock_t *powerboard)     // done
+int SmartLock::unlock(smart_lock_t *smart_lock)     // done
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -411,10 +410,10 @@ begin:
     ROS_WARN("start to unlock ...");
     do
     {
-        powerboard->send_data_buf[0] = 0x5A;
-        powerboard->send_data_buf[1] =  0x0A;
-        powerboard->send_data_buf[2] = FRAME_TYPE_UNLOCK;
-        powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
+        smart_lock->send_data_buf[0] = 0x5A;
+        smart_lock->send_data_buf[1] =  0x0A;
+        smart_lock->send_data_buf[2] = FRAME_TYPE_UNLOCK;
+        smart_lock->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
         for(std::vector<int>::iterator it = to_unlock_serials.begin(); it != to_unlock_serials.end(); it++)
         {
             if((*it) <= 32)
@@ -422,18 +421,18 @@ begin:
                 lock_bit |= 1<<((*it) - 1);
             }
         }
-        powerboard->send_data_buf[4]  = (uint8_t)(lock_bit) & 0xff;
-        powerboard->send_data_buf[5]  = (uint8_t)(lock_bit>>8) & 0xff ;
-        powerboard->send_data_buf[6]  = (uint8_t)(lock_bit>>16) & 0xff;
-        powerboard->send_data_buf[7]  = (uint8_t)(lock_bit>>24) & 0xff;
+        smart_lock->send_data_buf[4]  = (uint8_t)(lock_bit) & 0xff;
+        smart_lock->send_data_buf[5]  = (uint8_t)(lock_bit>>8) & 0xff ;
+        smart_lock->send_data_buf[6]  = (uint8_t)(lock_bit>>16) & 0xff;
+        smart_lock->send_data_buf[7]  = (uint8_t)(lock_bit>>24) & 0xff;
         to_unlock_serials.clear();
 
     }while(0);
 
-    powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
-    powerboard->send_data_buf[9] = PROTOCOL_TAIL;
+    smart_lock->send_data_buf[8] = this->CalCheckSum(smart_lock->send_data_buf, 8);
+    smart_lock->send_data_buf[9] = PROTOCOL_TAIL;
     to_unlock_serials.clear();
-    this->send_serial_data(powerboard);
+    this->send_serial_data(smart_lock);
     usleep(TEST_WAIT_TIME);
     return error;
 }
@@ -441,7 +440,7 @@ begin:
 
 
 
-int SmartLock::set_super_pw(smart_lock_t *powerboard)    
+int SmartLock::set_super_pw(smart_lock_t *smart_lock)    
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -449,16 +448,16 @@ begin:
     int error = -1;
     ROS_WARN("start to set super pass word ...");
 
-    powerboard->send_data_buf[0] = 0x5A;
-    powerboard->send_data_buf[1] = 10;
-    powerboard->send_data_buf[2] = FRAME_TYPE_SET_SUPER_PW;
-    powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
+    smart_lock->send_data_buf[0] = 0x5A;
+    smart_lock->send_data_buf[1] = 10;
+    smart_lock->send_data_buf[2] = FRAME_TYPE_SET_SUPER_PW;
+    smart_lock->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
     to_set_super_pw = super_password;
     for(int i = 0; i < 4; i++)
     {
         if(to_set_super_pw.size() == 4)
         {
-            powerboard->send_data_buf[4 + i]  = to_set_super_pw[i];
+            smart_lock->send_data_buf[4 + i]  = to_set_super_pw[i];
         }
         else
         {
@@ -466,15 +465,15 @@ begin:
         }
     }
 
-    powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
-    powerboard->send_data_buf[9] = PROTOCOL_TAIL;
+    smart_lock->send_data_buf[8] = this->CalCheckSum(smart_lock->send_data_buf, 8);
+    smart_lock->send_data_buf[9] = PROTOCOL_TAIL;
 
-    this->send_serial_data(powerboard);
+    this->send_serial_data(smart_lock);
     usleep(TEST_WAIT_TIME);
     return error;
 }
 
-int SmartLock::set_super_rfid(smart_lock_t *powerboard)     
+int SmartLock::set_super_rfid(smart_lock_t *smart_lock)     
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -482,16 +481,16 @@ begin:
     int error = -1;
     ROS_WARN("start to set super RFID ...");
 
-    powerboard->send_data_buf[0] = 0x5A;
-    powerboard->send_data_buf[1] = 10;
-    powerboard->send_data_buf[2] = FRAME_TYPE_SET_SUPER_RFID;
-    powerboard->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
+    smart_lock->send_data_buf[0] = 0x5A;
+    smart_lock->send_data_buf[1] = 10;
+    smart_lock->send_data_buf[2] = FRAME_TYPE_SET_SUPER_RFID;
+    smart_lock->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
     to_set_super_rfid = super_rfid;
     for(int i = 0; i < 4; i++)
     {
         if(to_set_super_rfid.size() == 4)
         {
-            powerboard->send_data_buf[4 + i]  = to_set_super_rfid[i];
+            smart_lock->send_data_buf[4 + i]  = to_set_super_rfid[i];
         }
         else
         {
@@ -499,24 +498,24 @@ begin:
         }
     }
 
-    powerboard->send_data_buf[8] = this->CalCheckSum(powerboard->send_data_buf, 8);
-    powerboard->send_data_buf[9] = PROTOCOL_TAIL;
+    smart_lock->send_data_buf[8] = this->CalCheckSum(smart_lock->send_data_buf, 8);
+    smart_lock->send_data_buf[9] = PROTOCOL_TAIL;
 
-    this->send_serial_data(powerboard);
+    this->send_serial_data(smart_lock);
     usleep(TEST_WAIT_TIME);
     return error;
 }
 
-int SmartLock::get_lock_version(smart_lock_t *powerboard)
+int SmartLock::get_lock_version(smart_lock_t *smart_lock)
 {
     int error = -1;
-    powerboard->send_data_buf[0] = 0x5a;
-    powerboard->send_data_buf[1] = 6;
-    powerboard->send_data_buf[2] = 0x20;
-    powerboard->send_data_buf[3] = 3;
-    powerboard->send_data_buf[4] = 0x69;
-    powerboard->send_data_buf[5] = 0xa5;
-    this->send_serial_data(powerboard);
+    smart_lock->send_data_buf[0] = 0x5a;
+    smart_lock->send_data_buf[1] = 6;
+    smart_lock->send_data_buf[2] = 0x20;
+    smart_lock->send_data_buf[3] = 3;
+    smart_lock->send_data_buf[4] = 0x69;
+    smart_lock->send_data_buf[5] = 0xa5;
+    this->send_serial_data(smart_lock);
     usleep(TEST_WAIT_TIME);
     return error;
 }
@@ -629,7 +628,7 @@ void SmartLock::pub_json_msg_to_app( const nlohmann::json j_msg)
     ss.clear();
     ss << j_msg;
     pub_json_msg.data = ss.str();
-    //this->noah_powerboard_pub.publish(pub_json_msg);
+    //this->noah_smart_lock_pub.publish(pub_json_msg);
 }
 
 int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)

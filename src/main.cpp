@@ -41,7 +41,6 @@ int main(int argc, char **argv)
     //system("shutdown now");
     //system("echo \'kaka\' | sudo -S sh -c \' shutdown now\'");
     ros::init(argc, argv, "smart_lock_node");
-    //NoahPowerboard  powerboard;
     SmartLock *smart_lock = new SmartLock();
     ros::Rate loop_rate(20);
     uint32_t cnt = 0;
@@ -60,9 +59,7 @@ int main(int argc, char **argv)
         ROS_INFO("Open %s OK.",sys_smart_lock->dev);
     }
 #endif
-    //pthread_t can_protocol_proc_handle;
     pthread_t agent_protocol_proc_handle;
-    //pthread_create(&can_protocol_proc_handle, NULL, uart_protocol_process,(void*)powerboard);
     pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)smart_lock);
     signal(SIGINT, sigintHandler);
 
