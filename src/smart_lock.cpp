@@ -186,6 +186,7 @@ void *agent_protocol_process(void* arg)
         usleep((1000/AGENT_THREAD_HZ) * 1000);
     }
 }
+
 void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 {
     auto j = json::parse(msg->data.c_str());
@@ -204,9 +205,28 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
             if(j.find("passwords") != j.end()/* && j["passwords"].find("passwords") != j["password"].end()*/)
             {
                 ROS_WARN("get passwords");
+#if 0   //get super password and rfid num: for reserve 
+
+                auto array_json = j["passwords"];
+                int array_json_size = array_json.size();
+                ROS_ERROR("array_json size: %d",array_json_size);
+                if(array_json_size > 0)
+                {
+                    for(int n = 0; n < array_json_size; n++)
+                    {
+                    }
+                }
+                else
+                {
+                }
+                auto j_array = j["passwords"];
+                std::string j_str = j.dump();
+                ROS_ERROR("%s",j_str.data());
+#endif
                 int box_num = j["passwords"][0]["boxNum"];
                 std::string password = j["passwords"][0]["password"];
                 std::string rfid = password;
+
                 ROS_WARN("get box num : %d, password is %s", box_num, password.data());
                 update_super_into_db(db_, table_super_rfid_pw, rfid, password);
 
@@ -270,7 +290,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
             ROS_INFO("get binding_credit_card_employees . . .");
             delete_all_db_data(db_, table_pivas);
             bool get_door_id = false;
-            for(int i = 0; i < 32; i++) 
+            for(int i = 1; i < 33; i++) 
             {
                 if(j["data"].find(std::to_string(i)) != j["data"].end())
                 {
