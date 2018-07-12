@@ -44,9 +44,8 @@ int main(int argc, char **argv)
     SmartLock *smart_lock = new SmartLock();
     ros::Rate loop_rate(20);
     uint32_t cnt = 0;
-    smart_lock->PowerboardParamInit();
+    smart_lock->param_init();
 
-#if 1
     sys_smart_lock->device = open_com_device(sys_smart_lock->dev);
     if(sys_smart_lock->device < 0 )
     {
@@ -58,13 +57,10 @@ int main(int argc, char **argv)
         set_parity(sys_smart_lock->device,8,1,'N');  
         ROS_INFO("Open %s OK.",sys_smart_lock->dev);
     }
-#endif
     pthread_t agent_protocol_proc_handle;
     pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)smart_lock);
     signal(SIGINT, sigintHandler);
-
-
-
+    
 #if 1   //sqlite test
 
 

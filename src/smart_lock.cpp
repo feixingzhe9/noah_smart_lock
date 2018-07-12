@@ -121,7 +121,7 @@ void SmartLock::pub_info_to_agent(long long uuid, uint8_t type, std::string data
     pub_to_agent.publish(pub_json_msg);
 }
 
-int SmartLock::PowerboardParamInit(void)
+int SmartLock::param_init(void)
 {
     char dev_path[] = "/dev/ttyS2";
     memcpy(sys_smart_lock->dev,dev_path, sizeof(dev_path));
@@ -482,6 +482,7 @@ begin:
         else
         {
             ROS_ERROR("to_set_super_pw.size() is not 4 ! !");
+            return -1;
         }
     }
 
@@ -515,6 +516,7 @@ begin:
         else
         {
             ROS_ERROR("to_set_super_rfid.size() is not 4 ! !");
+            return -1;
         }
     }
 
@@ -911,7 +913,7 @@ int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
                         {
                             qr_code.push_back(frame_buf[4+i]);
                         }
-                        ROS_ERROR("receive QR code: %s",qr_code.data());
+                        ROS_WARN("receive QR code: %s",qr_code.data());
                         input_qr_code.push_back(qr_code);
                         pub_to_agent_t tmp;
                         tmp.type = 1;

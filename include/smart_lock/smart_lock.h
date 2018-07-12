@@ -142,7 +142,7 @@ class SmartLock
             //lock_match_db.clear();
 
         }
-        int PowerboardParamInit(void);
+        int param_init(void);
         int send_serial_data(smart_lock_t *sys);
         int handle_receive_data(smart_lock_t *sys);
 
