@@ -20,22 +20,22 @@ include_directories(
   include/smart_lock
 )
 
-add_executable(smart_lock_node 
+add_executable(smart_lock_node
     src/main.cpp
-	src/uart.cpp
-	src/smart_lock.cpp
-	src/data_proc.cpp
+    src/uart.cpp
+    src/smart_lock.cpp
+    src/data_proc.cpp
 )
 
 #set(EXTRALIB_BIN ${PROJECT_SOURCE_DIR}/lib/libsqlite.so.0)
 
 
-LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib/) 
-#LINK_DIRECTORIES(/usr/lib/) 
+LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib/)
+#LINK_DIRECTORIES(/usr/lib/)
 
 
 target_link_libraries(smart_lock_node
-  ${catkin_LIBRARIES} sqlite3 
+  ${catkin_LIBRARIES} sqlite3
 )
 
 #############
@@ -48,7 +48,7 @@ target_link_libraries(smart_lock_node
 #############
 
 
-install(TARGETS smart_lock_node 
+install(TARGETS smart_lock_node
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -65,14 +65,8 @@ install(DIRECTORY launch
     USE_SOURCE_PERMISSIONS
     )
 
-install(DIRECTORY config 
+install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     USE_SOURCE_PERMISSIONS
     )
-
-
-
-
-
-
 

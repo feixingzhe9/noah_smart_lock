@@ -1,15 +1,15 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "std_msgs/UInt8MultiArray.h" 
+#include "std_msgs/UInt8MultiArray.h"
 #include <math.h>
-#include <stdio.h>     
-#include <stdlib.h>     
-#include <unistd.h>     
-#include <sys/types.h>  
-#include <sys/stat.h>   
-#include <fcntl.h>      
-#include <termios.h>   
-#include <errno.h>     
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <errno.h>
 #include <string.h>
 #include <time.h>
 #include <signal.h>
@@ -38,17 +38,17 @@ sqlite3*  open_db(void)
     int rc;
 
     //打开指定的数据库文件,如果不存在将创建一个同名的数据库文件
-    //rc = sqlite3_open("~/catkin_ws/install/lib/smart_lock/pw_rfid.db", &db); 
-    //rc = sqlite3_open("/home/robot/catkin_ws/install/share/smart_lock/pw_rfid.db", &db); 
-    //rc = sqlite3_open("/home/kaka/my_ros/install/share/smart_lock/pw_rfid.db", &db); 
-    rc = sqlite3_open("pw_rfid.db", &db); 
+    //rc = sqlite3_open("~/catkin_ws/install/lib/smart_lock/pw_rfid.db", &db);
+    //rc = sqlite3_open("/home/robot/catkin_ws/install/share/smart_lock/pw_rfid.db", &db);
+    //rc = sqlite3_open("/home/kaka/my_ros/install/share/smart_lock/pw_rfid.db", &db);
+    rc = sqlite3_open("pw_rfid.db", &db);
     if( rc )
     {
         fprintf(stderr, "Can't open database: %s/n", sqlite3_errmsg(db));
         sqlite3_close(db);
         return NULL;
     }
-    else 
+    else
     {
         ROS_INFO(" opened or created a sqlite3 database named pw_rfid.db successfully");
     }
@@ -247,7 +247,7 @@ int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string 
     }
     uid += 1;
     std::string uid_str = std::to_string(uid);
-    sql = "INSERT INTO " + table + " (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");"; 
+    sql = "INSERT INTO " + table + " (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");";
     ROS_INFO("%s: %s",__func__, sql.data());
     sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
     if(sql_exec_err != SQLITE_OK)
@@ -268,7 +268,7 @@ static int sqlite_update_db_by_rfid_callback(void *tmp, int argc, char **argv, c
 {
     //ROS_INFO("%s = %s\n", azColName[0], argv[0] ? argv[0] : "NULL");
     ROS_INFO("%s",__func__);
-    *(int*)tmp = 1; 
+    *(int*)tmp = 1;
     return 0;
 }
 int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id)
@@ -286,7 +286,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
     uid += 1;
     int is_have_the_rfid = 0;
     std::string uid_str = std::to_string(uid);
-    //sql = "INSERT INTO PIVAS (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");"; 
+    //sql = "INSERT INTO PIVAS (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");";
     sql = "SELECT RFID FROM PIVAS WHERE RFID =  \'" + rfid + "\';";
     ROS_INFO("%s: %s",__func__, sql.data());
     sql_exec_err = sqlite3_exec(db,sql.data(),sqlite_update_db_by_rfid_callback,(void *)&is_have_the_rfid,&err_msg);
@@ -301,9 +301,9 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
     if(is_have_the_rfid == 1)
     {
 
-        //sql = "UPDATE PIVAS SET UID = " + std::to_string(uid) + ", SET RFID = \'" + rfid + "\', SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
-        //sql = "UPDATE PIVAS  SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
-        sql = "UPDATE PIVAS SET PASSWORD = \'" + pw + "\' WHERE RFID = \'" + rfid + "\';"; 
+        //sql = "UPDATE PIVAS SET UID = " + std::to_string(uid) + ", SET RFID = \'" + rfid + "\', SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';";
+        //sql = "UPDATE PIVAS  SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';";
+        sql = "UPDATE PIVAS SET PASSWORD = \'" + pw + "\' WHERE RFID = \'" + rfid + "\';";
         sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
         if(sql_exec_err != SQLITE_OK)
         {
@@ -314,7 +314,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
             return -1;
         }
 
-        sql = "UPDATE PIVAS SET WORKER_ID = \'" + std::to_string(worker_id) + "\' WHERE RFID = \'" + rfid + "\';"; 
+        sql = "UPDATE PIVAS SET WORKER_ID = \'" + std::to_string(worker_id) + "\' WHERE RFID = \'" + rfid + "\';";
         sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
         if(sql_exec_err != SQLITE_OK)
         {
@@ -325,7 +325,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
             return -1;
         }
 
-        sql = "UPDATE PIVAS SET DOOR_ID = \'" + std::to_string(door_id) + "\' WHERE RFID = \'" + rfid + "\';"; 
+        sql = "UPDATE PIVAS SET DOOR_ID = \'" + std::to_string(door_id) + "\' WHERE RFID = \'" + rfid + "\';";
         sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
         if(sql_exec_err != SQLITE_OK)
         {
@@ -357,7 +357,7 @@ static int sqlite_update_db_by_door_id_callback(void *tmp, int argc, char **argv
 {
     //ROS_INFO("%s = %s\n", azColName[0], argv[0] ? argv[0] : "NULL");
     ROS_INFO("%s",__func__);
-    *(int*)tmp = 1; 
+    *(int*)tmp = 1;
     return 0;
 }
 int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id)
@@ -375,7 +375,7 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
     uid += 1;
     int is_have_the_door_id = 0;
     std::string uid_str = std::to_string(uid);
-    //sql = "INSERT INTO PIVAS (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");"; 
+    //sql = "INSERT INTO PIVAS (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");";
     sql = "SELECT RFID FROM PIVAS WHERE DOOR_ID =  " + std::to_string(door_id) + ";";
     ROS_INFO("%s: %s",__func__, sql.data());
     sql_exec_err = sqlite3_exec(db,sql.data(),sqlite_update_db_by_door_id_callback,(void *)&is_have_the_door_id,&err_msg);
@@ -390,9 +390,9 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
     if(is_have_the_door_id == 1)
     {
 
-        //sql = "UPDATE PIVAS SET UID = " + std::to_string(uid) + ", SET RFID = \'" + rfid + "\', SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
-        //sql = "UPDATE PIVAS  SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';"; 
-        sql = "UPDATE PIVAS SET PASSWORD = \'" + pw + "\' WHERE DOOR_ID = " + std::to_string(door_id) + ";"; 
+        //sql = "UPDATE PIVAS SET UID = " + std::to_string(uid) + ", SET RFID = \'" + rfid + "\', SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';";
+        //sql = "UPDATE PIVAS  SET PASSWORD =  \'" + pw + "\', SET WORK_ID =  " + std::to_string(work_id) + ", SET DOOR_ID = " + std::to_string(door_id) + " WHERE RFID = \'" + rfid + "\';";
+        sql = "UPDATE PIVAS SET PASSWORD = \'" + pw + "\' WHERE DOOR_ID = " + std::to_string(door_id) + ";";
         sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
         if(sql_exec_err != SQLITE_OK)
         {
@@ -403,7 +403,7 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
             return -1;
         }
 
-        sql = "UPDATE PIVAS SET WORKER_ID = \'" + std::to_string(worker_id) + "\' WHERE DOOR_ID = " + std::to_string(door_id) + ";"; 
+        sql = "UPDATE PIVAS SET WORKER_ID = \'" + std::to_string(worker_id) + "\' WHERE DOOR_ID = " + std::to_string(door_id) + ";";
         sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
         if(sql_exec_err != SQLITE_OK)
         {
@@ -414,7 +414,7 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
             return -1;
         }
 
-        sql = "UPDATE PIVAS SET RFID = \'" + rfid + "\' WHERE DOOR_ID = " + std::to_string(door_id) + ";"; 
+        sql = "UPDATE PIVAS SET RFID = \'" + rfid + "\' WHERE DOOR_ID = " + std::to_string(door_id) + ";";
         sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
         if(sql_exec_err != SQLITE_OK)
         {
@@ -454,8 +454,8 @@ int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::s
     }
     uid += 1;
     std::string uid_str = std::to_string(uid);
-    //sql = "INSERT INTO PIVAS (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");"; 
-    sql = "INSERT INTO " + table + " (UID, RFID, PASSWORD)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\' );"; 
+    //sql = "INSERT INTO PIVAS (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");";
+    sql = "INSERT INTO " + table + " (UID, RFID, PASSWORD)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\' );";
     ROS_INFO("%s: %s",__func__, sql.data());
     sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
     if(sql_exec_err != SQLITE_OK)
@@ -490,7 +490,7 @@ int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::s
     }
     else if(uid == 1)
     {
-        sql = "UPDATE SUPER_RFID_PW SET PASSWORD = \'" + pw + "\' WHERE UID = \'" + std::to_string(1) + "\';"; 
+        sql = "UPDATE SUPER_RFID_PW SET PASSWORD = \'" + pw + "\' WHERE UID = \'" + std::to_string(1) + "\';";
         sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
         if(sql_exec_err != SQLITE_OK)
         {
@@ -500,7 +500,7 @@ int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::s
             sqlite3_free(err_msg);
             return -1;
         }
-        sql = "UPDATE SUPER_RFID_PW SET rfid = \'" + rfid + "\' WHERE UID = \'" + std::to_string(1) + "\';"; 
+        sql = "UPDATE SUPER_RFID_PW SET rfid = \'" + rfid + "\' WHERE UID = \'" + std::to_string(1) + "\';";
         sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
         if(sql_exec_err != SQLITE_OK)
         {

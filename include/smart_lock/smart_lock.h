@@ -43,7 +43,7 @@ enum
 
 }DATA_DIRECTION_E;
 
-#define COM_ERR_REPEAT_TIME             3 
+#define COM_ERR_REPEAT_TIME             3
 
 
 
@@ -106,7 +106,7 @@ typedef struct
 typedef struct
 {
 #define DEV_STRING_LEN              50
-    char                        dev[DEV_STRING_LEN]; 
+    char                        dev[DEV_STRING_LEN];
     int                         device;
 
 #define SEND_DATA_BUF_LEN           255
@@ -116,7 +116,7 @@ typedef struct
     std::vector<lock_serials_stauts_t> lock_serials_status;
 }smart_lock_t;
 
-typedef enum 
+typedef enum
 {
     LIGHTS_MODE_DEFAULT                 = 0,
     LIGHTS_MODE_NOMAL                   = 1,
@@ -132,7 +132,7 @@ typedef enum
 }light_mode_t;
 
 extern smart_lock_t    *sys_smart_lock;
-class SmartLock 
+class SmartLock
 {
     public:
         SmartLock()
@@ -147,7 +147,7 @@ class SmartLock
         int handle_receive_data(smart_lock_t *sys);
 
 
-        int unlock(smart_lock_t *smart_lock);  
+        int unlock(smart_lock_t *smart_lock);
         int get_lock_version(smart_lock_t *smart_lock);
         int set_super_pw(smart_lock_t *smart_lock);
         int set_super_rfid(smart_lock_t *smart_lock);

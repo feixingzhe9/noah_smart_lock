@@ -1,15 +1,15 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "std_msgs/UInt8MultiArray.h" 
+#include "std_msgs/UInt8MultiArray.h"
 #include <math.h>
-#include <stdio.h>     
-#include <stdlib.h>     
-#include <unistd.h>     
-#include <sys/types.h>  
-#include <sys/stat.h>   
-#include <fcntl.h>      
-#include <termios.h>   
-#include <errno.h>     
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <errno.h>
 #include <string.h>
 #include <time.h>
 #include <signal.h>
@@ -40,7 +40,7 @@ static int led_over_time_flag = 0;
 static int last_unread_bytes = 0;
 static unsigned char recv_buf_last[BUF_LEN] = {0};
 
-smart_lock_t    sys_smart_lock_ram; 
+smart_lock_t    sys_smart_lock_ram;
 smart_lock_t    *sys_smart_lock = &sys_smart_lock_ram;
 
 
@@ -89,7 +89,7 @@ void SmartLock::pub_info_to_agent(long long uuid, uint8_t type, std::string data
 
     t2 =    localtime(&t);
     sprintf(buf, "%04d%02d%02d  %02d:%02d:%02d", t2->tm_year + 1900, t2->tm_mon + 1, t2->tm_mday, t2->tm_hour, t2->tm_min, t2->tm_sec);
-    ROS_INFO("%s\n", buf);              
+    ROS_INFO("%s\n", buf);
 #else
 
 #endif
@@ -131,11 +131,11 @@ int SmartLock::param_init(void)
 }
 
 #define SEND_TO_AGENT_CNT           3
-#define SEND_TO_AGENT_PERIOD        500    //unit: ms 
-#define AGENT_THREAD_HZ             50    //unit: ms 
+#define SEND_TO_AGENT_PERIOD        500    //unit: ms
+#define AGENT_THREAD_HZ             50    //unit: ms
 void *agent_protocol_process(void* arg)
 {
-    SmartLock *pSmartLock =  (SmartLock*)arg; 
+    SmartLock *pSmartLock =  (SmartLock*)arg;
     while(ros::ok())
     {
         static uint8_t type;
@@ -175,7 +175,7 @@ void *agent_protocol_process(void* arg)
                 send_cnt++;
                 if(send_cnt >= SEND_TO_AGENT_CNT)
                 {
-                    is_need_to_pub = false; 
+                    is_need_to_pub = false;
                     is_pub_complete = true;
                     send_cnt = 0;
                 }
@@ -205,7 +205,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
             if(j.find("passwords") != j.end()/* && j["passwords"].find("passwords") != j["password"].end()*/)
             {
                 ROS_WARN("get passwords");
-#if 0   //get super password and rfid num: for reserve 
+#if 0   //get super password and rfid num: for reserve
 
                 auto array_json = j["passwords"];
                 int array_json_size = array_json.size();
@@ -231,7 +231,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                 ROS_WARN("get box num : %d, password is %s", box_num, password.data());
                 if(update_super_into_db(db_, TABLE_SUPER_RFID_PW, rfid, password) < 0)
                 {
-                    ROS_ERROR("%s: update_super_into_db ERROR ! !",__func__); 
+                    ROS_ERROR("%s: update_super_into_db ERROR ! !",__func__);
                     is_need_update_rfid_pw = false;
                 }
 
@@ -316,7 +316,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                 ROS_ERROR("delete_all_db_data ERROR ! !");
             }
             bool get_door_id = false;
-            for(int i = 1; i < 33; i++) 
+            for(int i = 1; i < 33; i++)
             {
                 if(j["data"].find(std::to_string(i)) != j["data"].end())
                 {
@@ -425,9 +425,9 @@ int SmartLock::send_serial_data(smart_lock_t *sys)
     {
         PowerboardInfo("smart_lock_node send ok");
         return 0;
-    }     
-    else   
-    {               
+    }
+    else
+    {
         tcflush(sys->device,TCOFLUSH);
         if(-1 == len)
         {
@@ -444,7 +444,7 @@ uint8_t SmartLock::CalCheckSum(uint8_t *data, uint8_t len)
     {
         sum += data[i];
     }
-    return sum;  
+    return sum;
 }
 
 
@@ -489,7 +489,7 @@ begin:
 
 
 
-int SmartLock::set_super_pw(smart_lock_t *smart_lock)    
+int SmartLock::set_super_pw(smart_lock_t *smart_lock)
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -523,7 +523,7 @@ begin:
     return error;
 }
 
-int SmartLock::set_super_rfid(smart_lock_t *smart_lock)     
+int SmartLock::set_super_rfid(smart_lock_t *smart_lock)
 {
 begin:
     static uint8_t err_cnt = 0;
@@ -596,7 +596,7 @@ int SmartLock::handle_receive_data(smart_lock_t *sys)
     //PowerboardInfo("start read ...");
     //PowerboardInfo("rcv device is %d",sys->device);
     if((nread = read(sys->device, recv_buf, BUF_LEN))>0)
-    { 
+    {
         PowerboardInfo("read complete ... ");
         memcpy(recv_buf_complete+last_unread_bytes,recv_buf,nread);
         data_Len = last_unread_bytes + nread;
@@ -611,12 +611,12 @@ int SmartLock::handle_receive_data(smart_lock_t *sys)
             if(0xcc == recv_buf_complete [i])
             {
 
-                //frame_len = recv_buf_complete[i+1]; 
+                //frame_len = recv_buf_complete[i+1];
                 //ROS_WARN("recv_buf_complete[%d]: is %d",i,recv_buf_complete[i]);
                 //ROS_WARN("recv_buf_complete[%d]: is %d",i+1,recv_buf_complete[i+1]);
                 if(recv_buf_complete[i+1] != 0xcc)
                 {
-                    frame_len = recv_buf_complete[i+1] - 1; 
+                    frame_len = recv_buf_complete[i+1] - 1;
                 }
                 else
                 {
@@ -653,13 +653,13 @@ int SmartLock::handle_receive_data(smart_lock_t *sys)
                     break;
                 }
             }
-            else 
+            else
             {
                 i++;
             }
         }
     }
-    else 
+    else
     {
         i = stat(sys->dev,&file_info);
         if(-1 == i)
@@ -687,7 +687,7 @@ int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
     int frame_len = 0;
     int i = 0;
     int j = 0;
-    int command = 0; 
+    int command = 0;
     unsigned char check_data = 0;
     uint8_t cmd_type = 0;
     uint8_t data_direction = 0;
@@ -722,7 +722,7 @@ int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
                     {
                         lock_serials_stauts_t single_status;
 
-                        ROS_WARN("UNLOCK : receive ack data from lock."); 
+                        ROS_WARN("UNLOCK : receive ack data from lock.");
                         //lock_serials_status
 #if 0
                         for(uint8_t i = 0; i < (data_len -6)/2; i++)
@@ -776,11 +776,11 @@ int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
                         for(int j = 0; j < 32; j++)
                         {
                             single_status.lock_id = j + 1;
-                            single_status.status = 0; 
+                            single_status.status = 0;
                             if(lock_status_bit & (1<<j))
                             {
                                 ROS_INFO("lock %d status is on", j + 1);
-                                single_status.status = 1; 
+                                single_status.status = 1;
                             }
                             lock_serials_status.push_back(single_status);
                         }
@@ -838,7 +838,7 @@ int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
 
             }
 
-            break; 
+            break;
         case DATA_DIRECTION_LOCK_TO_X86:
             switch(cmd_type)
             {

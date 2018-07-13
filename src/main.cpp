@@ -54,13 +54,13 @@ int main(int argc, char **argv)
     else
     {
         set_speed(sys_smart_lock->device,9600);
-        set_parity(sys_smart_lock->device,8,1,'N');  
+        set_parity(sys_smart_lock->device,8,1,'N');
         ROS_INFO("Open %s OK.",sys_smart_lock->dev);
     }
     pthread_t agent_protocol_proc_handle;
     pthread_create(&agent_protocol_proc_handle, NULL, agent_protocol_process,(void*)smart_lock);
     signal(SIGINT, sigintHandler);
-    
+
 #if 1   //sqlite test
 
 
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
     super_rfid = get_table_super_rfid_to_ram(db_, TABLE_SUPER_RFID_PW);
     if(super_rfid.size() != 4)
     {
-        super_rfid = "1055";	
+        super_rfid = "1055";
         ROS_ERROR("wrong data in database, using default super rfid: %s",super_rfid.data());
     }
     else
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
     super_password = get_table_super_pw_to_ram(db_, TABLE_SUPER_RFID_PW);
     if(super_password.size() != 4)
     {
-        super_password = "1055";	
+        super_password = "1055";
         ROS_ERROR("wrong data in database, using default super password: %s",super_password.data());
     }
     else
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
     //close(fd);
     if(close(sys_smart_lock->device) > 0)
     {
-        // ROS_INFO("Close 
+        // ROS_INFO("Close
     }
     sqlite3_close(db_); //关闭数据库
 
