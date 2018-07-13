@@ -67,7 +67,12 @@ int main(int argc, char **argv)
     db_ = open_db();
     std::string sql;
     char *err_msg;
-    create_table(db_);
+    if(create_table(db_) < 0)
+    {
+        ROS_ERROR("create_table ERROR ! !");
+        sqlite3_close(db_);
+
+    }
 
 
     //update_super_into_db(db_, table_super_rfid_pw, "1050", "3333");
@@ -77,7 +82,7 @@ int main(int argc, char **argv)
 
 
 
-    lock_match_db_vec = get_table_pivas_to_ram(db_, table_pivas);
+    lock_match_db_vec = get_table_pivas_to_ram(db_, TABLE_PIVAS);
     int lock_match_size = lock_match_db_vec.size();
     ROS_INFO("lock_match_db_vec.size = %d",lock_match_size);
     for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
@@ -89,21 +94,21 @@ int main(int argc, char **argv)
         ROS_INFO("lock_match_db_vec.door_id = %d",      (*it).door_id);
     }
 
-    super_rfid = get_table_super_rfid_to_ram(db_, table_super_rfid_pw);
+    super_rfid = get_table_super_rfid_to_ram(db_, TABLE_SUPER_RFID_PW);
     if(super_rfid.size() != 4)
     {
         super_rfid = "1055";	
-        ROS_ERROR("NO data in database, using default super rfid: %s",super_rfid.data());
+        ROS_ERROR("wrong data in database, using default super rfid: %s",super_rfid.data());
     }
     else
     {
         ROS_INFO("super rfid : %s",super_rfid.data());
     }
-    super_password = get_table_super_pw_to_ram(db_, table_super_rfid_pw);
+    super_password = get_table_super_pw_to_ram(db_, TABLE_SUPER_RFID_PW);
     if(super_password.size() != 4)
     {
         super_password = "1055";	
-        ROS_ERROR("NO data in database, using default super password: %s",super_password.data());
+        ROS_ERROR("wrong data in database, using default super password: %s",super_password.data());
     }
     else
     {

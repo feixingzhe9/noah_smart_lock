@@ -227,12 +227,35 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                 std::string password = j["passwords"][0]["password"];
                 std::string rfid = password;
 
-                ROS_WARN("get box num : %d, password is %s", box_num, password.data());
-                update_super_into_db(db_, table_super_rfid_pw, rfid, password);
-
-                super_rfid = get_table_super_rfid_to_ram(db_, table_super_rfid_pw); //need to add mutex
-                super_password = get_table_super_pw_to_ram(db_, table_super_rfid_pw); //need to add mutex
                 is_need_update_rfid_pw = true;
+                ROS_WARN("get box num : %d, password is %s", box_num, password.data());
+                if(update_super_into_db(db_, TABLE_SUPER_RFID_PW, rfid, password) < 0)
+                {
+                    ROS_ERROR("%s: update_super_into_db ERROR ! !",__func__); 
+                    is_need_update_rfid_pw = false;
+                }
+
+                rfid = get_table_super_rfid_to_ram(db_, TABLE_SUPER_RFID_PW); //need to add mutex
+                if(rfid.size() != 4)
+                {
+                    ROS_ERROR("%s: get wrong rfid: %s",__func__, rfid.data());
+                    is_need_update_rfid_pw = false;
+                }
+                else
+                {
+                    super_rfid = rfid;
+                }
+
+                password = get_table_super_pw_to_ram(db_, TABLE_SUPER_RFID_PW); //need to add mutex
+                if(password.size() != 4)
+                {
+                    ROS_ERROR("%s: get wrong password: %s",__func__, password.data());
+                    is_need_update_rfid_pw = false;
+                }
+                else
+                {
+                    super_password = password;
+                }
                 json j_ack;
                 j_ack.clear();
                 j_ack =     //ack operation successfull
@@ -288,7 +311,10 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
         if(j["pub_name"] == "binding_credit_card_employees")
         {
             ROS_INFO("get binding_credit_card_employees . . .");
-            delete_all_db_data(db_, table_pivas);
+            if(delete_all_db_data(db_, TABLE_PIVAS) < 0)
+            {
+                ROS_ERROR("delete_all_db_data ERROR ! !");
+            }
             bool get_door_id = false;
             for(int i = 1; i < 33; i++) 
             {
@@ -305,10 +331,13 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                         std::string rfid = std::to_string(worker_id);
                         std::string password = std::to_string(worker_id);
                         //update_db_by_door_id(db_, table_pivas, rfid, password,  worker_id, i);
-                        insert_into_db(db_, table_pivas,rfid, password, worker_id, i);
+                        if(insert_into_db(db_, TABLE_PIVAS,rfid, password, worker_id, i) < 0)
+                        {
+                            ROS_ERROR("%s: insert_into_db ERROR ! !",__func__);
+                        }
                     }
                     lock_match_db_vec.clear();
-                    lock_match_db_vec = get_table_pivas_to_ram(db_, table_pivas);       //need to add mutex
+                    lock_match_db_vec = get_table_pivas_to_ram(db_, TABLE_PIVAS);       //need to add mutex
                 }
             }
             if(get_door_id == true)
