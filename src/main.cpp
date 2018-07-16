@@ -69,8 +69,8 @@ int main(int argc, char **argv)
     char *err_msg;
     if(create_table(db_) < 0)
     {
-        ROS_ERROR("create_table ERROR ! !");
-        sqlite3_close(db_);
+        //ROS_ERROR("create_table ERROR ! !");
+        //sqlite3_close(db_);
 
     }
 

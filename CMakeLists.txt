@@ -4,10 +4,11 @@ project(smart_lock)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  roslib
 )
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs
+  CATKIN_DEPENDS roscpp std_msgs roslib
 #  LIBRARIES ${PROJECT_NAME}
 )
 

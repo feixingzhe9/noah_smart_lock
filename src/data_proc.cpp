@@ -1,4 +1,5 @@
 #include "ros/ros.h"
+#include <ros/package.h>
 #include "std_msgs/String.h"
 #include "std_msgs/UInt8MultiArray.h"
 #include <math.h>
@@ -36,12 +37,13 @@ sqlite3*  open_db(void)
     sqlite3 *db=NULL;
     char *zErrMsg = 0;
     int rc;
+    std::string path = ros::package::getPath("smart_lock") + "/pw_rfid.db";
+
+    ROS_INFO("package smartlock path: %s",path.c_str());
 
     //打开指定的数据库文件,如果不存在将创建一个同名的数据库文件
-    //rc = sqlite3_open("~/catkin_ws/install/lib/smart_lock/pw_rfid.db", &db);
-    //rc = sqlite3_open("/home/robot/catkin_ws/install/share/smart_lock/pw_rfid.db", &db);
-    //rc = sqlite3_open("/home/kaka/my_ros/install/share/smart_lock/pw_rfid.db", &db);
-    rc = sqlite3_open("pw_rfid.db", &db);
+    //rc = sqlite3_open("pw_rfid.db", &db);
+    rc = sqlite3_open(path.c_str(), &db);
     if( rc )
     {
         fprintf(stderr, "Can't open database: %s/n", sqlite3_errmsg(db));
@@ -59,6 +61,7 @@ sqlite3*  open_db(void)
 int create_table(sqlite3 *db)
 {
     std::string sql;
+    int err = 0;
     char *err_msg = 0;
     int sql_exec_err = SQLITE_OK;
     sql = "CREATE TABLE " + TABLE_PIVAS + "(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);";
@@ -69,7 +72,7 @@ int create_table(sqlite3 *db)
         ROS_ERROR("%s: sql: %s",__func__,sql.data());
         ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
         sqlite3_free(err_msg);
-        return -1;
+        err =  -1;
     }
 
     sql = "CREATE TABLE " + TABLE_SUPER_RFID_PW + " (UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL);";
@@ -80,9 +83,9 @@ int create_table(sqlite3 *db)
         ROS_ERROR("%s: sql: %s",__func__,sql.data());
         ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
         sqlite3_free(err_msg);
-        return -1;
+        err =  -1;
     }
-    return 0;
+    return err;
 }
 int delete_all_db_data(sqlite3 *db, std::string table)
 {
