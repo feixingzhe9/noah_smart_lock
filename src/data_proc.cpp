@@ -279,6 +279,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
     char *zErrMsg = 0;
     std::string sql;
     char *err_msg;
+    int error = 0;
     int sql_exec_err = SQLITE_OK;
     int uid = get_max_uid(db, table);
     if(uid < 0)
@@ -299,7 +300,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
         ROS_ERROR("%s: sql: %s",__func__,sql.data());
         ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
         sqlite3_free(err_msg);
-        return -1;
+        error =  -1;
     }
     if(is_have_the_rfid == 1)
     {
@@ -314,7 +315,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
             ROS_ERROR("%s: sql: %s",__func__,sql.data());
             ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
             sqlite3_free(err_msg);
-            return -1;
+            error =  -1;
         }
 
         sql = "UPDATE PIVAS SET WORKER_ID = \'" + std::to_string(worker_id) + "\' WHERE RFID = \'" + rfid + "\';";
@@ -325,7 +326,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
             ROS_ERROR("%s: sql: %s",__func__,sql.data());
             ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
             sqlite3_free(err_msg);
-            return -1;
+            error =  -1;
         }
 
         sql = "UPDATE PIVAS SET DOOR_ID = \'" + std::to_string(door_id) + "\' WHERE RFID = \'" + rfid + "\';";
@@ -336,7 +337,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
             ROS_ERROR("%s: sql: %s",__func__,sql.data());
             ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
             sqlite3_free(err_msg);
-            return -1;
+            error =  -1;
         }
 
         ROS_INFO("%s, sql: %s",__func__, sql.data());
@@ -350,7 +351,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
         }
     }
 
-    return 0;
+    return error;
 
 }
 
@@ -366,6 +367,7 @@ static int sqlite_update_db_by_door_id_callback(void *tmp, int argc, char **argv
 int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id)
 {
     char *zErrMsg = 0;
+    int error = 0;
     std::string sql;
     int sql_exec_err = SQLITE_OK;
     char *err_msg;
@@ -388,7 +390,7 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
         ROS_ERROR("%s: sql: %s",__func__,sql.data());
         ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
         sqlite3_free(err_msg);
-        return -1;
+        error =  -1;
     }
     if(is_have_the_door_id == 1)
     {
@@ -403,7 +405,7 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
             ROS_ERROR("%s: sql: %s",__func__,sql.data());
             ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
             sqlite3_free(err_msg);
-            return -1;
+            error =  -1;
         }
 
         sql = "UPDATE PIVAS SET WORKER_ID = \'" + std::to_string(worker_id) + "\' WHERE DOOR_ID = " + std::to_string(door_id) + ";";
@@ -414,7 +416,7 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
             ROS_ERROR("%s: sql: %s",__func__,sql.data());
             ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
             sqlite3_free(err_msg);
-            return -1;
+            error =  -1;
         }
 
         sql = "UPDATE PIVAS SET RFID = \'" + rfid + "\' WHERE DOOR_ID = " + std::to_string(door_id) + ";";
@@ -425,7 +427,7 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
             ROS_ERROR("%s: sql: %s",__func__,sql.data());
             ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
             sqlite3_free(err_msg);
-            return -1;
+            error =  -1;
         }
 
         ROS_INFO("%s, sql: %s",__func__, sql.data());
@@ -439,6 +441,7 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
         }
     }
 
+    return error;
 }
 
 
@@ -476,6 +479,7 @@ int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::s
 {
     char *zErrMsg = 0;
     std::string sql;
+    int error = 0;
     char *err_msg;
     int sql_exec_err = SQLITE_OK;
     int uid = get_max_uid(db, table);
@@ -501,7 +505,7 @@ int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::s
             ROS_ERROR("%s: sql: %s",__func__,sql.data());
             ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
             sqlite3_free(err_msg);
-            return -1;
+            error =  -1;
         }
         sql = "UPDATE SUPER_RFID_PW SET rfid = \'" + rfid + "\' WHERE UID = \'" + std::to_string(1) + "\';";
         sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
@@ -511,7 +515,7 @@ int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::s
             ROS_ERROR("%s: sql: %s",__func__,sql.data());
             ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
             sqlite3_free(err_msg);
-            return -1;
+            error =  -1;
         }
     }
     else if (uid > 1)
@@ -524,13 +528,14 @@ int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::s
             ROS_ERROR("%s: sql: %s",__func__,sql.data());
             ROS_ERROR("%s: sql_err_msgs: %s",__func__,err_msg);
             sqlite3_free(err_msg);
-            return -1;
+            error =  -1;
         }
         if(insert_super_into_db(db, table, rfid, pw) < 0)
         {
             ROS_ERROR("%s: insert_super_into_db ERROR ! !",__func__);
         }
     }
+    return error;
 }
 
 static int sqlite_get_table_pivas_to_ram_callback(void *tmp, int argc, char **argv, char **azColName)
@@ -558,6 +563,7 @@ static int sqlite_get_table_pivas_to_ram_callback(void *tmp, int argc, char **ar
     }
     return 0;
 }
+
 std::vector<lock_pivas_t> get_table_pivas_to_ram(sqlite3 *db, std::string table)
 {
     char *zErrMsg = 0;

@@ -1,3 +1,5 @@
+#ifndef _SMART_LOCK_SMART_LOCK_H
+#define _SMART_LOCK_SMART_LOCK_H
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "json.hpp"
@@ -5,13 +7,11 @@
 #include <time.h>
 
 using json = nlohmann::json;
-#ifndef SMART_LOCK_H
-#define SMART_LOCK_H
 
 
 #define PROTOCOL_HEAD               0xcc
 #define PROTOCOL_TAIL               0xa5
-#define POWER_CURRENT_LEN           33
+//#define POWER_CURRENT_LEN           33
 
 #define BUF_LEN                    256
 
@@ -31,9 +31,6 @@ enum
 
 }FRAME_TYPE_E;
 
-
-
-
 enum
 {
     DATA_DIRECTION_LOCK_TO_X86 = 1,
@@ -45,22 +42,11 @@ enum
 
 #define COM_ERR_REPEAT_TIME             3
 
-
-
-
-
-
-
-
-
-
-
 typedef struct
 {
     uint8_t lock_id;
     bool status;
 }lock_serials_stauts_t;
-
 
 typedef struct
 {
@@ -85,22 +71,6 @@ typedef struct
     int worker_id;
     int door_id;
 }lock_pivas_t;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 typedef struct
