@@ -190,12 +190,10 @@ void *agent_protocol_process(void* arg)
 void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 {
     auto j = json::parse(msg->data.c_str());
-    long long  uuid;
     std::string uuid_str;
     if(j.find("uuid") != j.end())
     {
         uuid_str = j["uuid"];
-        uuid = std::atoi(uuid_str.data());
     }
     if(j.find("pub_name") != j.end())
     {
@@ -447,9 +445,6 @@ uint8_t SmartLock::CalCheckSum(uint8_t *data, uint8_t len)
     return sum;
 }
 
-
-
-
 int SmartLock::unlock(smart_lock_t *smart_lock)     // done
 {
 begin:
@@ -485,8 +480,6 @@ begin:
     usleep(TEST_WAIT_TIME);
     return error;
 }
-
-
 
 
 int SmartLock::set_super_pw(smart_lock_t *smart_lock)
@@ -570,8 +563,6 @@ int SmartLock::get_lock_version(smart_lock_t *smart_lock)
     usleep(TEST_WAIT_TIME);
     return error;
 }
-
-
 
 int SmartLock::handle_receive_data(smart_lock_t *sys)
 {
@@ -938,9 +929,13 @@ int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
                     {
                         std::string qr_code;
                         qr_code.clear();
-                        for( int i = 0; i < data_len - 7; i++)
+                        for( int i = 0; i < data_len - 8; i++)
                         {
                             qr_code.push_back(frame_buf[4+i]);
+                        }
+                        if(frame_buf[data_len - 8] != '\r')
+                        {
+                            qr_code.push_back(frame_buf[data_len - 8]);
                         }
                         ROS_WARN("receive QR code: %s",qr_code.data());
                         input_qr_code.push_back(qr_code);
