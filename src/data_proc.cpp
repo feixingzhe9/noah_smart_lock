@@ -24,12 +24,9 @@
 #include <time.h>
 #include <algorithm>
 #include <smart_lock.h>
-//#include <vector>
 #include <sqlite3.h>
 
 
-//const std::string table_pivas = "PIVAS";
-//const std::string table_super_rfid_pw = "SUPER_RFID_PW";
 const std::string TABLE_PIVAS = "pivas";
 const std::string TABLE_SUPER_RFID_PW = "super_rfid_pw";
 sqlite3*  open_db(void)

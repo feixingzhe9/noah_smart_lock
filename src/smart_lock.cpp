@@ -104,7 +104,7 @@ void SmartLock::pub_info_to_agent(long long uuid, uint8_t type, std::string data
             {
                 {"type", type},
 
-                {"code",data.data()},
+                {"code",data.c_str()},
                 {"time", t * 1000},
                 {"result", status},
                 //{"array",{1,2,3,4,5,6}},
@@ -929,15 +929,17 @@ int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
                     {
                         std::string qr_code;
                         qr_code.clear();
-                        for( int i = 0; i < data_len - 8; i++)
+                        int i = 0;
+                        for(i = 0; i < data_len - 8; i++)
                         {
                             qr_code.push_back(frame_buf[4+i]);
                         }
-                        if(frame_buf[data_len - 8] != '\r')
+                        if(frame_buf[4 + i] != 0x0d)
                         {
-                            qr_code.push_back(frame_buf[data_len - 8]);
+                            ROS_WARN("frame_buf[ %d ] = 0x%X", 4 + i, frame_buf[4 + i]);
+                            qr_code.push_back(frame_buf[4 + i]);
                         }
-                        ROS_WARN("receive QR code: %s",qr_code.data());
+                        ROS_WARN("receive QR code: %s",qr_code.c_str());
                         input_qr_code.push_back(qr_code);
                         pub_to_agent_t tmp;
                         tmp.type = 1;
