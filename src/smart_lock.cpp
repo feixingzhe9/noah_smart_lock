@@ -53,12 +53,7 @@ std::vector<std::string> input_pw;
 std::vector<std::string> input_rfid;
 std::vector<std::string> input_qr_code;
 
-
-
 std::string lock_version;
-
-
-
 
 std::vector<pub_to_agent_t> pub_to_agent_vector;	//boost::mutex::scoped_lock()
 //std::vector<uint8_t> lock_serials_vector;	//boost::mutex::scoped_lock()
@@ -69,8 +64,6 @@ std::string to_set_super_rfid =  "0000";
 
 std::string set_super_pw_ack;
 std::string set_super_rfid_ack;
-
-
 
 std::vector<lock_pivas_t> lock_match_db_vec;
 std::string super_rfid = "1050";
@@ -97,7 +90,7 @@ void SmartLock::pub_info_to_agent(long long uuid, uint8_t type, std::string data
     j.clear();
     j =
     {
-        {"uuid",uuid_str.data()},
+        {"uuid",uuid_str.c_str()},
         {"sub_name","smart_lock_notice"},
         {
             "data",
@@ -259,7 +252,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                 j_ack =     //ack operation successfull
 
                 {
-                    {"uuid",uuid_str.data()},
+                    {"uuid",uuid_str.c_str()},
                     {"sub_name","container_super_password"},
 
                     {
@@ -319,17 +312,20 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                 if(j["data"].find(std::to_string(i)) != j["data"].end())
                 {
                     get_door_id = true;
-                    std::vector<int> worker_id_vec = j["data"][std::to_string(i)];
-                    int worker_id;
+                    std::vector<std::string> worker_id_vec = j["data"][std::to_string(i)];
+                    std::string worker_id;
                     ROS_INFO(" get door id : %d ",i);
-                    for(std::vector<int>::iterator it = worker_id_vec.begin(); it != worker_id_vec.end(); it++)
+                    for(std::vector<std::string>::iterator it = worker_id_vec.begin(); it != worker_id_vec.end(); it++)
                     {
                         worker_id = (*it);
-                        ROS_INFO("worker id : %d",worker_id);
-                        std::string rfid = std::to_string(worker_id);
-                        std::string password = std::to_string(worker_id);
+                        ROS_INFO("worker id : %s",worker_id.c_str());
+
+                        std::string rfid = worker_id;
+                        std::string password = worker_id;
+                        int int_worker_id = std::atoi(worker_id.c_str());
+
                         //update_db_by_door_id(db_, table_pivas, rfid, password,  worker_id, i);
-                        if(insert_into_db(db_, TABLE_PIVAS,rfid, password, worker_id, i) < 0)
+                        if(insert_into_db(db_, TABLE_PIVAS,rfid, password, int_worker_id, i) < 0)
                         {
                             ROS_ERROR("%s: insert_into_db ERROR ! !",__func__);
                         }
@@ -346,7 +342,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                 j_ack.clear();
                 j_ack =
                 {
-                    {"uuid",uuid_str.data()},
+                    {"uuid",uuid_str.c_str()},
                     {"sub_name","binding_credit_card_employees"},
 
                     {
@@ -371,7 +367,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                 j_ack.clear();
                 j_ack =     // operation failed
                 {
-                    {"uuid",uuid_str.data()},
+                    {"uuid",uuid_str.c_str()},
                     {"sub_name","binding_credit_card_employees"},
 
                     {
@@ -393,6 +389,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 
     }
 }
+
 int SmartLock::send_serial_data(smart_lock_t *sys)
 {
     boost::mutex io_mutex;
