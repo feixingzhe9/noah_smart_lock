@@ -389,8 +389,6 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 }
 
 
-
-
 int SmartLock::unlock( uint32_t to_unlock)     // done
 {
     int error = 0;
@@ -419,7 +417,6 @@ int SmartLock::unlock( uint32_t to_unlock)     // done
         ROS_INFO("data[%d] : 0x%x", i, can_msg.Data[i]);
     }
 
-
     return error;
 }
 
@@ -440,9 +437,27 @@ int SmartLock::set_super_rfid(smart_lock_t *smart_lock)
     return error;
 }
 
-int SmartLock::get_lock_version(smart_lock_t *smart_lock)
+int SmartLock::get_lock_version(void)
 {
     int error = -1;
+
+    mrobot_driver_msgs::vci_can can_msg;
+    CAN_ID_UNION id;
+    memset(&id, 0x0, sizeof(CAN_ID_UNION));
+    id.CanID_Struct.SourceID = CAN_SOURCE_ID_GET_VERSION;
+    id.CanID_Struct.SrcMACID = 0;
+    id.CanID_Struct.DestMACID = SMART_LOCK_CAN_SRC_MAC_ID;
+    id.CanID_Struct.FUNC_ID = 0x02;
+    id.CanID_Struct.ACK = 0;
+    id.CanID_Struct.res = 0;
+
+    can_msg.ID = id.CANx_ID;
+    can_msg.DataLen = 1;
+    can_msg.Data.resize(1);
+    can_msg.Data[0] = 0x00;
+
+    this->pub_to_can_node.publish(can_msg);
+
     return error;
 }
 
@@ -481,16 +496,238 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
 #endif
     can_msg.ID = msg->ID;
     id.CANx_ID = can_msg.ID;
-    can_msg.DataLen = msg->DataLen;
+    //can_msg.DataLen = msg->DataLen;
     if(id.CanID_Struct.SrcMACID != SMART_LOCK_CAN_SRC_MAC_ID)
     {
         return ;
     }
 
     //can_msg.Data.resize(can_msg.DataLen);
-    if(id.CanID_Struct.SourceID == CAN_SOURCE_ID_UNLOCK)
+
+    uint8_t source_id = id.CanID_Struct.SourceID;
+    uint8_t data_len = msg->DataLen;
+
+    ROS_INFO("%s", __func__);
+    ROS_INFO("source id: 0x%x",source_id);
+    ROS_INFO("data length: %d",data_len);
+
+    switch(source_id)
     {
-        
+        case CAN_SOURCE_ID_UNLOCK:
+            ROS_INFO("get unlock ack from mcu"); 
+            break;
+
+        case CAN_SOURCE_ID_RFID_UPLOAD:
+            ROS_INFO("get rfid upload info from mcu"); 
+            if(data_len == 4)
+            {
+                std::string rfid;
+                uint8_t status = 1;
+                uint16_t rfid_int = 0;
+                rfid.resize(4);
+                rfid.clear();
+                rfid_int = msg->Data[2];
+                rfid_int = rfid_int<<8;
+                rfid_int += msg->Data[3];
+
+                ROS_INFO("rfid int data :%d",rfid_int);
+
+                if(rfid_int >= 1000)
+                {
+                    rfid = std::to_string(rfid_int);
+                }
+                else if(rfid_int >= 100)
+                {
+                    std::string rfid_1 = "0";
+                    std::string rfid_2_4 = std::to_string(rfid_int);
+                    rfid = rfid_1 + rfid_2_4; 
+                }
+                else if(rfid_int >= 10)
+                {
+                    std::string rfid_1_2 = "00";
+                    std::string rfid_3_4 = std::to_string(rfid_int);
+                    rfid = rfid_1_2 + rfid_3_4; 
+                }
+                else
+                {
+                    std::string rfid_1_3 = "000";
+                    std::string rfid_4 = std::to_string(rfid_int);
+                    rfid = rfid_1_3 + rfid_4; 
+                }
+                ROS_INFO("receive RFID: %s",rfid.c_str());
+                input_rfid.push_back(rfid);
+                for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
+                {
+                    if((*it).rfid == rfid)
+                    {
+                        ROS_INFO("get right RFID  ID");
+                        to_unlock_serials.push_back((*it).door_id);
+                        status = 0;
+                        do
+                        {
+                            boost::mutex::scoped_lock(tmx_smart_lock);
+                            to_unlock_serials.push_back((*it).door_id);
+                        }while(0);
+
+                    }
+                }
+
+                std::sort(to_unlock_serials.begin(),to_unlock_serials.end());
+                to_unlock_serials.erase(unique(to_unlock_serials.begin(), to_unlock_serials.end()), to_unlock_serials.end());
+
+                if(rfid == super_rfid)
+                {
+                    status = 0;
+                    ROS_WARN("get right super RFID");
+                }
+                pub_to_agent_t tmp;
+                tmp.type = 2;
+                tmp.code = rfid;
+                tmp.result = status;
+                do
+                {
+                    boost::mutex::scoped_lock(mtx_agent);
+                    pub_to_agent_vector.push_back(tmp);
+                }while(0);
+            }
+
+            break;
+
+        case CAN_SOURCE_ID_PW_UPLOAD:
+            {
+                if(data_len == 4)
+                {
+                    ROS_INFO("get password upload");
+                    std::string pw;
+                    uint8_t status = 1;
+                    pw.resize(4);
+                    pw.clear();
+                    for(uint8_t i = 0; i < 4; i++)
+                    {
+                        pw.push_back(msg->Data[i]);
+                    }
+                    ROS_INFO("receive pass word: %s",pw.data());
+                    input_pw.push_back(pw);
+
+                    for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
+                    {
+                        if((*it).password == pw)
+                        {
+                            ROS_INFO("get right pass word");
+                            do
+                            {
+                                boost::mutex::scoped_lock(tmx_smart_lock);
+                                to_unlock_serials.push_back((*it).door_id);
+                            }while(0);
+                            status = 0;
+                        }
+                    }
+                    std::sort(to_unlock_serials.begin(),to_unlock_serials.end());
+                    to_unlock_serials.erase(unique(to_unlock_serials.begin(), to_unlock_serials.end()), to_unlock_serials.end());
+                    if(pw == super_password)
+                    {
+                        status = 0;
+                        ROS_WARN("get right super password");
+                    }
+                    pub_to_agent_t tmp;
+                    tmp.type = 3;
+                    tmp.code = pw;
+                    tmp.result = status;
+                    do
+                    {
+                        boost::mutex::scoped_lock(mtx_agent);
+                        pub_to_agent_vector.push_back(tmp);
+                    }while(0);
+
+                }
+
+            }
+            break;
+
+        case CAN_SOURCE_ID_GET_VERSION:
+            ROS_INFO("get mcu version info. "); 
+            for(int i = 0; i < data_len; i++)
+            {
+                this->mcu_version.push_back(msg->Data[i]);
+            }
+            n.setParam(mcu_version_param, this->mcu_version.c_str());
+            ROS_INFO("get lock mcu version : %s",this->mcu_version.c_str());
+            break;
+        case CAN_SOURCE_ID_QR_CODE_UPLOAD_1:
+            {
+                ROS_INFO("get upload QR 1  code info."); 
+                std::string qr_code;
+                qr_code.clear();
+                int i = 0;
+                for(i = 0; i < data_len; i++)
+                {
+                    qr_code.push_back(msg->Data[i]);
+                }
+
+                ROS_WARN("receive QR code: %s",qr_code.c_str());
+                input_qr_code.push_back(qr_code);
+                pub_to_agent_t tmp;
+                tmp.type = 1;
+                tmp.code = qr_code;
+                tmp.result = 0;
+                do
+                {
+                    boost::mutex::scoped_lock(mtx_agent);
+                    pub_to_agent_vector.push_back(tmp);
+                }while(0);
+            }
+            break;
+        case CAN_SOURCE_ID_QR_CODE_UPLOAD_2:
+            {
+                ROS_INFO("get upload QR 2  code info."); 
+                std::string qr_code;
+                qr_code.clear();
+                int i = 0;
+                for(i = 0; i < data_len; i++)
+                {
+                    qr_code.push_back(msg->Data[i]);
+                }
+
+                ROS_WARN("receive QR code: %s",qr_code.c_str());
+                input_qr_code.push_back(qr_code);
+                pub_to_agent_t tmp;
+                tmp.type = 1;
+                tmp.code = qr_code;
+                tmp.result = 0;
+                do
+                {
+                    boost::mutex::scoped_lock(mtx_agent);
+                    pub_to_agent_vector.push_back(tmp);
+                }while(0);
+            }
+            break;
+        case CAN_SOURCE_ID_QR_CODE_UPLOAD_3:
+            {
+                ROS_INFO("get upload QR 3  code info."); 
+                std::string qr_code;
+                qr_code.clear();
+                int i = 0;
+                for(i = 0; i < data_len; i++)
+                {
+                    qr_code.push_back(msg->Data[i]);
+                }
+
+                ROS_WARN("receive QR code: %s",qr_code.c_str());
+                input_qr_code.push_back(qr_code);
+                pub_to_agent_t tmp;
+                tmp.type = 1;
+                tmp.code = qr_code;
+                tmp.result = 0;
+                do
+                {
+                    boost::mutex::scoped_lock(mtx_agent);
+                    pub_to_agent_vector.push_back(tmp);
+                }while(0);
+            }
+            break;
+
+        default : break;
+
     }
 }
 

@@ -35,10 +35,12 @@ enum
 #define CAN_SOURCE_ID_LOCK_STATUS       0x81
 #define CAN_SOURCE_ID_PW_UPLOAD         0x82
 #define CAN_SOURCE_ID_RFID_UPLOAD       0x83
-#define CAN_SOURCE_ID_QR_CODE_UPLOAD    0x83
-#define CAN_SOURCE_ID_SET_SUPER_PW      0x83
-#define CAN_SOURCE_ID_SET_SUPER_RFID    0x83
+#define CAN_SOURCE_ID_SET_SUPER_PW      0x84
+#define CAN_SOURCE_ID_SET_SUPER_RFID    0x85
 
+#define CAN_SOURCE_ID_QR_CODE_UPLOAD_1  0x90
+#define CAN_SOURCE_ID_QR_CODE_UPLOAD_2  0x91
+#define CAN_SOURCE_ID_QR_CODE_UPLOAD_3  0x92
 
 
 enum
@@ -103,16 +105,14 @@ class SmartLock
 
             pub_to_can_node = n.advertise<mrobot_driver_msgs::vci_can>("smart_lock_to_can", 1000);
 
+            mcu_version.clear();
             //lock_match_db.clear();
 
         }
         int param_init(void);
-        int send_serial_data(smart_lock_t *sys);
-        int handle_receive_data(smart_lock_t *sys);
-
 
         int unlock(uint32_t to_unlock);
-        int get_lock_version(smart_lock_t *smart_lock);
+        int get_lock_version(void);
         int set_super_pw(smart_lock_t *smart_lock);
         int set_super_rfid(smart_lock_t *smart_lock);
         void pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t);
@@ -127,6 +127,9 @@ class SmartLock
         ros::Publisher pub_to_can_node;
 
         can_long_frame  long_frame;
+
+        std::string mcu_version;
+        const std::string mcu_version_param = "mcu_lock_version";
 
         json j;
 

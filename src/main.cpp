@@ -108,14 +108,15 @@ int main(int argc, char **argv)
 #endif
     bool init_flag = false;
     bool get_agent_info_flag = false;
+    sleep(1);
     while(ros::ok())
     {
         if(init_flag == false)
         {
             usleep(100*1000);
-            smart_lock->get_lock_version(sys_smart_lock);
+            smart_lock->get_lock_version();
             init_flag = true;
-            smart_lock->unlock(0x12345678);
+            smart_lock->unlock(0x11111111);
 
         }
         if(is_need_update_rfid_pw == true)
