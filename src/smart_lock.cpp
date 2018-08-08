@@ -38,7 +38,7 @@ boost::mutex mtx_agent;
 //boost::mutex mtx_smart_lock;
 static int led_over_time_flag = 0;
 static int last_unread_bytes = 0;
-static unsigned char recv_buf_last[BUF_LEN] = {0};
+//static unsigned char recv_buf_last[BUF_LEN] = {0};
 
 smart_lock_t    sys_smart_lock_ram;
 smart_lock_t    *sys_smart_lock = &sys_smart_lock_ram;
@@ -116,8 +116,6 @@ void SmartLock::pub_info_to_agent(long long uuid, uint8_t type, std::string data
 
 int SmartLock::param_init(void)
 {
-    char dev_path[] = "/dev/ttyS2";
-    memcpy(sys_smart_lock->dev,dev_path, sizeof(dev_path));
     sys_smart_lock->lock_serials.clear();
     sys_smart_lock->lock_serials.push_back(1);
     return 0;
@@ -390,271 +388,61 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
     }
 }
 
-int SmartLock::send_serial_data(smart_lock_t *sys)
+
+
+
+int SmartLock::unlock( uint32_t to_unlock)     // done
 {
-    boost::mutex io_mutex;
-    boost::mutex::scoped_lock lock(io_mutex);
-    int len = 0;
+    int error = 0;
 
-    int send_buf_len = 0;
+    mrobot_driver_msgs::vci_can can_msg;
+    CAN_ID_UNION id;
+    memset(&id, 0x0, sizeof(CAN_ID_UNION));
+    id.CanID_Struct.SourceID = CAN_SOURCE_ID_UNLOCK;
+    id.CanID_Struct.SrcMACID = 0;
+    id.CanID_Struct.DestMACID = SMART_LOCK_CAN_SRC_MAC_ID;
+    id.CanID_Struct.FUNC_ID = 0x02;
+    id.CanID_Struct.ACK = 0;
+    id.CanID_Struct.res = 0;
 
-    if((sys->device < 0) || (NULL == sys->send_data_buf))
+    can_msg.ID = id.CANx_ID;
+    can_msg.DataLen = 5;
+    can_msg.Data.resize(5);
+    can_msg.Data[0] = 0x00;
+    *(uint32_t*)&can_msg.Data[1] = to_unlock;
+
+    this->pub_to_can_node.publish(can_msg);
+
+    ROS_INFO("%s", __func__);
+    for(int i = 0; i < 5; i++)
     {
-        ROS_INFO("dev or send_buf NULL!");
-        return -1;
+        ROS_INFO("data[%d] : 0x%x", i, can_msg.Data[i]);
     }
 
-    send_buf_len = sys->send_data_buf[1];
 
-    if(send_buf_len <= 0 )
-    {
-        PowerboardInfo("smart_lock_node send_buf len: %d small 0!",send_buf_len);
-        return -1;
-    }
-    for(int i =0;i<send_buf_len;i++)
-    {
-        ROS_INFO("smart_lock_node send_buf :%02x",sys->send_data_buf[i]);
-    }
-    len = write(sys->device,sys->send_data_buf,send_buf_len);
-    if (len == send_buf_len)
-    {
-        PowerboardInfo("smart_lock_node send ok");
-        return 0;
-    }
-    else
-    {
-        tcflush(sys->device,TCOFLUSH);
-        if(-1 == len)
-        {
-            //sys->com_state = COM_CLOSING;
-        }
-        return -1;
-    }
-}
-
-uint8_t SmartLock::CalCheckSum(uint8_t *data, uint8_t len)
-{
-    uint8_t sum = 0;
-    for(uint8_t i = 0; i < len; i++)
-    {
-        sum += data[i];
-    }
-    return sum;
-}
-
-int SmartLock::unlock(smart_lock_t *smart_lock)     // done
-{
-begin:
-    static uint8_t err_cnt = 0;
-    int lock_bit = 0;
-    int error = -1;
-    ROS_WARN("start to unlock ...");
-    do
-    {
-        smart_lock->send_data_buf[0] = 0x5A;
-        smart_lock->send_data_buf[1] =  0x0A;
-        smart_lock->send_data_buf[2] = FRAME_TYPE_UNLOCK;
-        smart_lock->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
-        for(std::vector<int>::iterator it = to_unlock_serials.begin(); it != to_unlock_serials.end(); it++)
-        {
-            if((*it) <= 32)
-            {
-                lock_bit |= 1<<((*it) - 1);
-            }
-        }
-        smart_lock->send_data_buf[4]  = (uint8_t)(lock_bit) & 0xff;
-        smart_lock->send_data_buf[5]  = (uint8_t)(lock_bit>>8) & 0xff ;
-        smart_lock->send_data_buf[6]  = (uint8_t)(lock_bit>>16) & 0xff;
-        smart_lock->send_data_buf[7]  = (uint8_t)(lock_bit>>24) & 0xff;
-        to_unlock_serials.clear();
-
-    }while(0);
-
-    smart_lock->send_data_buf[8] = this->CalCheckSum(smart_lock->send_data_buf, 8);
-    smart_lock->send_data_buf[9] = PROTOCOL_TAIL;
-    to_unlock_serials.clear();
-    this->send_serial_data(smart_lock);
-    usleep(TEST_WAIT_TIME);
     return error;
 }
 
 
 int SmartLock::set_super_pw(smart_lock_t *smart_lock)
 {
-begin:
-    static uint8_t err_cnt = 0;
-
     int error = -1;
     ROS_WARN("start to set super pass word ...");
 
-    smart_lock->send_data_buf[0] = 0x5A;
-    smart_lock->send_data_buf[1] = 10;
-    smart_lock->send_data_buf[2] = FRAME_TYPE_SET_SUPER_PW;
-    smart_lock->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
-    to_set_super_pw = super_password;
-    for(int i = 0; i < 4; i++)
-    {
-        if(to_set_super_pw.size() == 4)
-        {
-            smart_lock->send_data_buf[4 + i]  = to_set_super_pw[i];
-        }
-        else
-        {
-            ROS_ERROR("to_set_super_pw.size() is not 4 ! !");
-            return -1;
-        }
-    }
-
-    smart_lock->send_data_buf[8] = this->CalCheckSum(smart_lock->send_data_buf, 8);
-    smart_lock->send_data_buf[9] = PROTOCOL_TAIL;
-
-    this->send_serial_data(smart_lock);
-    usleep(TEST_WAIT_TIME);
     return error;
 }
 
 int SmartLock::set_super_rfid(smart_lock_t *smart_lock)
 {
-begin:
-    static uint8_t err_cnt = 0;
-
     int error = -1;
     ROS_WARN("start to set super RFID ...");
 
-    smart_lock->send_data_buf[0] = 0x5A;
-    smart_lock->send_data_buf[1] = 10;
-    smart_lock->send_data_buf[2] = FRAME_TYPE_SET_SUPER_RFID;
-    smart_lock->send_data_buf[3] = DATA_DIRECTION_X86_TO_LOCK;
-    to_set_super_rfid = super_rfid;
-    for(int i = 0; i < 4; i++)
-    {
-        if(to_set_super_rfid.size() == 4)
-        {
-            smart_lock->send_data_buf[4 + i]  = to_set_super_rfid[i];
-        }
-        else
-        {
-            ROS_ERROR("to_set_super_rfid.size() is not 4 ! !");
-            return -1;
-        }
-    }
-
-    smart_lock->send_data_buf[8] = this->CalCheckSum(smart_lock->send_data_buf, 8);
-    smart_lock->send_data_buf[9] = PROTOCOL_TAIL;
-
-    this->send_serial_data(smart_lock);
-    usleep(TEST_WAIT_TIME);
     return error;
 }
 
 int SmartLock::get_lock_version(smart_lock_t *smart_lock)
 {
     int error = -1;
-    smart_lock->send_data_buf[0] = 0x5a;
-    smart_lock->send_data_buf[1] = 6;
-    smart_lock->send_data_buf[2] = 0x20;
-    smart_lock->send_data_buf[3] = 3;
-    smart_lock->send_data_buf[4] = 0x69;
-    smart_lock->send_data_buf[5] = 0xa5;
-    this->send_serial_data(smart_lock);
-    usleep(TEST_WAIT_TIME);
-    return error;
-}
-
-int SmartLock::handle_receive_data(smart_lock_t *sys)
-{
-    int nread = 0;
-    int i = 0;
-    int j = 0;
-    int data_Len = 0;
-    int frame_len = 0;
-    unsigned char recv_buf[BUF_LEN] = {0};
-    unsigned char recv_buf_complete[BUF_LEN] = {0};
-    unsigned char recv_buf_temp[BUF_LEN] = {0};
-
-    struct stat file_info;
-    int error = -1;
-    if(0 != last_unread_bytes)
-    {
-        for(j=0;j<last_unread_bytes;j++)
-        {
-            recv_buf_complete [j] = recv_buf_last[j];
-        }
-    }
-    //PowerboardInfo("start read ...");
-    //PowerboardInfo("rcv device is %d",sys->device);
-    if((nread = read(sys->device, recv_buf, BUF_LEN))>0)
-    {
-        PowerboardInfo("read complete ... ");
-        memcpy(recv_buf_complete+last_unread_bytes,recv_buf,nread);
-        data_Len = last_unread_bytes + nread;
-        last_unread_bytes = 0;
-        for(uint8_t i = 0; i < data_Len; i++)
-        {
-            PowerboardInfo("rcv buf[%d]: %2x ",last_unread_bytes + i, recv_buf_complete[last_unread_bytes + i]);
-        }
-
-        while(i<data_Len)
-        {
-            if(0xcc == recv_buf_complete [i])
-            {
-
-                //frame_len = recv_buf_complete[i+1];
-                //ROS_WARN("recv_buf_complete[%d]: is %d",i,recv_buf_complete[i]);
-                //ROS_WARN("recv_buf_complete[%d]: is %d",i+1,recv_buf_complete[i+1]);
-                if(recv_buf_complete[i+1] != 0xcc)
-                {
-                    frame_len = recv_buf_complete[i+1] - 1;
-                }
-                else
-                {
-                    i++;
-                    continue;
-                }
-                ROS_WARN("frame len is : %d",frame_len);
-                if(i+frame_len <= data_Len)
-                {
-                    if((0xA5 == recv_buf_complete[i+frame_len-1]) && (i + frame_len > 0))
-                        //if(0xA5 == recv_buf_complete[i+frame_len-2])
-                    {
-                        for(j=0;j<frame_len;j++)
-                        {
-                            recv_buf_temp[j] = recv_buf_complete[i+j];
-                            PowerboardInfo("rcv buf %d is %2x",j, recv_buf_temp[j]);
-                        }
-                        ROS_INFO("get one frame");
-                        error = this->handle_rev_frame(sys,recv_buf_temp);
-                        i = i+ frame_len;
-                    }
-                    else
-                    {
-                        i++;
-                    }
-                }
-                else
-                {
-                    last_unread_bytes = data_Len - i;
-                    for(j=0;j<last_unread_bytes;j++)
-                    {
-                        recv_buf_last[j] = recv_buf_complete[i+j];
-                    }
-                    break;
-                }
-            }
-            else
-            {
-                i++;
-            }
-        }
-    }
-    else
-    {
-        i = stat(sys->dev,&file_info);
-        if(-1 == i)
-        {
-            //sys->com_state = COM_CLOSING;
-        }
-    }
     return error;
 }
 
@@ -670,6 +458,43 @@ void SmartLock::pub_json_msg_to_app( const nlohmann::json j_msg)
     //this->noah_smart_lock_pub.publish(pub_json_msg);
 }
 
+void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg)
+{
+    mrobot_driver_msgs::vci_can can_msg;
+    mrobot_driver_msgs::vci_can long_msg;
+    CAN_ID_UNION id;
+
+    long_msg = this->long_frame.frame_construct(c_msg);
+    mrobot_driver_msgs::vci_can* msg = &long_msg;
+    if( msg->ID == 0 )
+    {
+        return;
+    }
+#if 0
+    if(this->is_log_on == true)
+    {
+        for(uint8_t i = 0; i < msg->DataLen; i++)
+        {
+            ROS_INFO("msg->Data[%d] = 0x%x",i,msg->Data[i]);
+        }
+    }
+#endif
+    can_msg.ID = msg->ID;
+    id.CANx_ID = can_msg.ID;
+    can_msg.DataLen = msg->DataLen;
+    if(id.CanID_Struct.SrcMACID != SMART_LOCK_CAN_SRC_MAC_ID)
+    {
+        return ;
+    }
+
+    //can_msg.Data.resize(can_msg.DataLen);
+    if(id.CanID_Struct.SourceID == CAN_SOURCE_ID_UNLOCK)
+    {
+        
+    }
+}
+
+#if 0
 int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
 {
     int frame_len = 0;
@@ -964,11 +789,4 @@ int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
     }
     return error;
 }
-
-
-
-
-
-
-
-
+#endif

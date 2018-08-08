@@ -4,16 +4,15 @@
 #include "std_msgs/String.h"
 #include "json.hpp"
 #include <sqlite3.h>
-#include <time.h>
+//#include <time.h>
+#include <mrobot_driver_msgs/vci_can.h>
+#include <roscan/can_long_frame.h>
+
 
 using json = nlohmann::json;
 
 
-#define PROTOCOL_HEAD               0xcc
-#define PROTOCOL_TAIL               0xa5
-//#define POWER_CURRENT_LEN           33
-
-#define BUF_LEN                    256
+#define SMART_LOCK_CAN_SRC_MAC_ID   0xd6
 
 
 enum
@@ -26,10 +25,21 @@ enum
     FRAME_TYPE_SET_SUPER_PW     =  0x06,
     FRAME_TYPE_SET_SUPER_RFID   =  0x07,
 
-
     FRAME_TYPE_LOCK_VERSION     =  0x20,
 
 }FRAME_TYPE_E;
+
+#define CAN_SOURCE_ID_GET_VERSION       0x01
+
+#define CAN_SOURCE_ID_UNLOCK            0x80
+#define CAN_SOURCE_ID_LOCK_STATUS       0x81
+#define CAN_SOURCE_ID_PW_UPLOAD         0x82
+#define CAN_SOURCE_ID_RFID_UPLOAD       0x83
+#define CAN_SOURCE_ID_QR_CODE_UPLOAD    0x83
+#define CAN_SOURCE_ID_SET_SUPER_PW      0x83
+#define CAN_SOURCE_ID_SET_SUPER_RFID    0x83
+
+
 
 enum
 {
@@ -75,31 +85,10 @@ typedef struct
 
 typedef struct
 {
-#define DEV_STRING_LEN              50
-    char                        dev[DEV_STRING_LEN];
-    int                         device;
-
-#define SEND_DATA_BUF_LEN           255
-    uint8_t                     send_data_buf[SEND_DATA_BUF_LEN];
-
     std::vector<uint8_t> lock_serials;
     std::vector<lock_serials_stauts_t> lock_serials_status;
 }smart_lock_t;
 
-typedef enum
-{
-    LIGHTS_MODE_DEFAULT                 = 0,
-    LIGHTS_MODE_NOMAL                   = 1,
-    LIGHTS_MODE_ERROR                   = 2,
-    LIGHTS_MODE_LOW_POWER,
-    LIGHTS_MODE_CHARGING,
-    LIGHTS_MODE_TURN_LEFT,
-    LIGHTS_MODE_TURN_RIGHT,
-    LIGHTS_MODE_COM_ERROR,
-    LIGHTS_MODE_EMERGENCY_STOP,
-
-    LIGHTS_MODE_SETTING                 = 0xff,
-}light_mode_t;
 
 extern smart_lock_t    *sys_smart_lock;
 class SmartLock
@@ -109,6 +98,11 @@ class SmartLock
         {
             pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
             sub_from_agent = n.subscribe("agent_pub", 1000, &SmartLock::sub_from_agent_callback, this);
+
+            sub_from_can_node = n.subscribe("can_to_smart_lock", 1000, &SmartLock::rcv_from_can_node_callback, this);
+
+            pub_to_can_node = n.advertise<mrobot_driver_msgs::vci_can>("smart_lock_to_can", 1000);
+
             //lock_match_db.clear();
 
         }
@@ -117,7 +111,7 @@ class SmartLock
         int handle_receive_data(smart_lock_t *sys);
 
 
-        int unlock(smart_lock_t *smart_lock);
+        int unlock(uint32_t to_unlock);
         int get_lock_version(smart_lock_t *smart_lock);
         int set_super_pw(smart_lock_t *smart_lock);
         int set_super_rfid(smart_lock_t *smart_lock);
@@ -129,21 +123,23 @@ class SmartLock
         ros::NodeHandle n;
         ros::Publisher pub_to_agent;
         ros::Subscriber sub_from_agent;
+        ros::Subscriber sub_from_can_node;
+        ros::Publisher pub_to_can_node;
+
+        can_long_frame  long_frame;
+
         json j;
+
         void pub_json_msg_to_app(const nlohmann::json j_msg);
         void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
 
+        void rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg);
+
         lock_pivas_t lock_match_tmp;
 
-
 };
-int handle_receive_data(smart_lock_t *sys);
-void *uart_protocol_process(void* arg);
-void *agent_protocol_process(void* arg);
-void set_speed(int fd, int speed);
-int set_parity(int fd,int databits,int stopbits,int parity);
-int open_com_device(char *dev);
 
+void *agent_protocol_process(void* arg);
 
 extern const std::string TABLE_PIVAS;
 extern const std::string TABLE_SUPER_RFID_PW;
@@ -153,7 +149,6 @@ extern bool is_need_update_rfid_pw;
 extern sqlite3*  open_db(void);
 extern int create_table(sqlite3 *db);
 extern int delete_all_db_data(sqlite3 *db, std::string table);
-//extern int get_max_uid(sqlite3 *db, std::string table);
 extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
 extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
 extern int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id);

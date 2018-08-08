@@ -5,6 +5,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   roslib
+  mrobot_driver_msgs 
+  roscan
 )
 
 catkin_package(
@@ -23,7 +25,6 @@ include_directories(
 
 add_executable(smart_lock_node
     src/main.cpp
-    src/uart.cpp
     src/smart_lock.cpp
     src/data_proc.cpp
 )
