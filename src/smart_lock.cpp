@@ -421,18 +421,68 @@ int SmartLock::unlock( uint32_t to_unlock)     // done
 }
 
 
-int SmartLock::set_super_pw(smart_lock_t *smart_lock)
+int SmartLock::set_super_pw(std::string super_pw)
 {
     int error = -1;
-    ROS_WARN("start to set super pass word ...");
+    if(super_pw.size() == 4)
+    {
+        ROS_WARN("start to set super pass word ...");
+
+        mrobot_driver_msgs::vci_can can_msg;
+        CAN_ID_UNION id;
+        memset(&id, 0x0, sizeof(CAN_ID_UNION));
+        id.CanID_Struct.SourceID = CAN_SOURCE_ID_SET_SUPER_PW;
+        id.CanID_Struct.SrcMACID = 0;
+        id.CanID_Struct.DestMACID = SMART_LOCK_CAN_SRC_MAC_ID;
+        id.CanID_Struct.FUNC_ID = 0x02;
+        id.CanID_Struct.ACK = 0;
+        id.CanID_Struct.res = 0;
+
+        can_msg.ID = id.CANx_ID;
+        can_msg.DataLen = 5;
+        can_msg.Data.resize(5);
+
+        can_msg.Data[0] = 0x00;
+        can_msg.Data[1]  = super_pw.c_str()[0];
+        can_msg.Data[2]  = super_pw.c_str()[1];
+        can_msg.Data[3]  = super_pw.c_str()[2];
+        can_msg.Data[4]  = super_pw.c_str()[3];
+
+        this->pub_to_can_node.publish(can_msg);
+    }
 
     return error;
 }
 
-int SmartLock::set_super_rfid(smart_lock_t *smart_lock)
+int SmartLock::set_super_rfid(std::string super_rfid)
 {
     int error = -1;
-    ROS_WARN("start to set super RFID ...");
+    if(super_rfid.size() == 4)
+    {
+        ROS_WARN("start to set super pass word ...");
+
+        mrobot_driver_msgs::vci_can can_msg;
+        CAN_ID_UNION id;
+        memset(&id, 0x0, sizeof(CAN_ID_UNION));
+        id.CanID_Struct.SourceID = CAN_SOURCE_ID_SET_SUPER_RFID;
+        id.CanID_Struct.SrcMACID = 0;
+        id.CanID_Struct.DestMACID = SMART_LOCK_CAN_SRC_MAC_ID;
+        id.CanID_Struct.FUNC_ID = 0x02;
+        id.CanID_Struct.ACK = 0;
+        id.CanID_Struct.res = 0;
+
+        can_msg.ID = id.CANx_ID;
+        can_msg.DataLen = 5;
+        can_msg.Data.resize(5);
+
+        can_msg.Data[0] = 0x00;
+        can_msg.Data[1]  = super_rfid.c_str()[0];
+        can_msg.Data[2]  = super_rfid.c_str()[1];
+        can_msg.Data[3]  = super_rfid.c_str()[2];
+        can_msg.Data[4]  = super_rfid.c_str()[3];
+
+        this->pub_to_can_node.publish(can_msg);
+    }
 
     return error;
 }

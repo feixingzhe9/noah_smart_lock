@@ -113,8 +113,8 @@ class SmartLock
 
         int unlock(uint32_t to_unlock);
         int get_lock_version(void);
-        int set_super_pw(smart_lock_t *smart_lock);
-        int set_super_rfid(smart_lock_t *smart_lock);
+        int set_super_pw(std::string super_pw);
+        int set_super_rfid(std::string super_rfid);
         void pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t);
 
     private:
