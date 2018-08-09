@@ -389,9 +389,18 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 }
 
 
-int SmartLock::unlock( uint32_t to_unlock)     // done
+int SmartLock::unlock(void)     // done
 {
     int error = 0;
+    uint32_t lock_bit = 0;
+    for(std::vector<int>::iterator it = to_unlock_serials.begin(); it != to_unlock_serials.end(); it++)
+    {
+        if((*it) <= 32)
+        {
+            lock_bit |= 1<<((*it) - 1);
+        }
+    }
+    to_unlock_serials.clear();
 
     mrobot_driver_msgs::vci_can can_msg;
     CAN_ID_UNION id;
@@ -407,9 +416,15 @@ int SmartLock::unlock( uint32_t to_unlock)     // done
     can_msg.DataLen = 5;
     can_msg.Data.resize(5);
     can_msg.Data[0] = 0x00;
-    *(uint32_t*)&can_msg.Data[1] = to_unlock;
+
+    can_msg.Data[1] = (uint8_t)(lock_bit) & 0xff;
+    can_msg.Data[2] = (uint8_t)(lock_bit>>8) & 0xff ;
+    can_msg.Data[3] = (uint8_t)(lock_bit>>16) & 0xff;
+    can_msg.Data[4] = (uint8_t)(lock_bit>>24) & 0xff;
+    //*(uint32_t*)&can_msg.Data[1] = to_unlock;
 
     this->pub_to_can_node.publish(can_msg);
+
 
     ROS_INFO("%s", __func__);
     for(int i = 0; i < 5; i++)
@@ -694,15 +709,6 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
             }
             break;
 
-        case CAN_SOURCE_ID_GET_VERSION:
-            ROS_INFO("get mcu version info. "); 
-            for(int i = 0; i < data_len; i++)
-            {
-                this->mcu_version.push_back(msg->Data[i]);
-            }
-            n.setParam(mcu_version_param, this->mcu_version.c_str());
-            ROS_INFO("get lock mcu version : %s",this->mcu_version.c_str());
-            break;
         case CAN_SOURCE_ID_QR_CODE_UPLOAD_1:
             {
                 ROS_INFO("get upload QR 1  code info."); 
@@ -776,6 +782,50 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
             }
             break;
 
+        case CAN_SOURCE_ID_SET_SUPER_PW_ACK:
+            {
+                ROS_INFO("get ack of set super password from mcu"); 
+                std::string super_password_ack;
+                super_password_ack.clear();
+                if(PASSWORD_LEN == data_len)
+                {
+                    for(int i = 0; i < PASSWORD_LEN; i++)
+                    {
+                        super_password_ack.push_back(msg->Data[i]);
+                    }
+                    ROS_INFO("get ack super password: %s", super_password_ack.c_str());
+                }
+                break;
+            }
+
+        case CAN_SOURCE_ID_SET_SUPER_RFID_ACK:
+            {
+                ROS_INFO("get ack of set super rfid from mcu"); 
+                std::string super_rfid_ack;
+                super_rfid_ack.clear();
+                if(RFID_LEN == data_len)
+                {
+                    for(int i = 0; i < RFID_LEN; i++)
+                    {
+                        super_rfid_ack.push_back(msg->Data[i]);
+                    }
+                    ROS_INFO("get ack super rfid: %s", super_rfid_ack.c_str());
+                }
+                break;
+            }
+
+        case CAN_SOURCE_ID_GET_VERSION:
+            {
+                ROS_INFO("get mcu version info. "); 
+                for(int i = 0; i < data_len; i++)
+                {
+                    this->mcu_version.push_back(msg->Data[i]);
+                }
+                n.setParam(mcu_version_param, this->mcu_version.c_str());
+                ROS_INFO("get lock mcu version : %s",this->mcu_version.c_str());
+                break;
+            }
+        
         default : break;
 
     }

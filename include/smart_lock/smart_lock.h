@@ -14,7 +14,8 @@ using json = nlohmann::json;
 
 #define SMART_LOCK_CAN_SRC_MAC_ID   0xd6
 
-
+#define PASSWORD_LEN                4
+#define RFID_LEN                    4
 enum
 {
     FRAME_TYPE_UNLOCK           =  0x01,
@@ -29,18 +30,23 @@ enum
 
 }FRAME_TYPE_E;
 
-#define CAN_SOURCE_ID_GET_VERSION       0x01
+#define CAN_SOURCE_ID_GET_VERSION           0x01
 
-#define CAN_SOURCE_ID_UNLOCK            0x80
-#define CAN_SOURCE_ID_LOCK_STATUS       0x81
-#define CAN_SOURCE_ID_PW_UPLOAD         0x82
-#define CAN_SOURCE_ID_RFID_UPLOAD       0x83
-#define CAN_SOURCE_ID_SET_SUPER_PW      0x84
-#define CAN_SOURCE_ID_SET_SUPER_RFID    0x85
+#define CAN_SOURCE_ID_UNLOCK                0x80
+#define CAN_SOURCE_ID_LOCK_STATUS           0x81
+#define CAN_SOURCE_ID_PW_UPLOAD             0x82
+#define CAN_SOURCE_ID_RFID_UPLOAD           0x83
 
-#define CAN_SOURCE_ID_QR_CODE_UPLOAD_1  0x90
-#define CAN_SOURCE_ID_QR_CODE_UPLOAD_2  0x91
-#define CAN_SOURCE_ID_QR_CODE_UPLOAD_3  0x92
+#define CAN_SOURCE_ID_SET_SUPER_PW          0x84
+#define CAN_SOURCE_ID_SET_SUPER_PW_ACK      0x84
+
+#define CAN_SOURCE_ID_SET_SUPER_RFID        0x85
+#define CAN_SOURCE_ID_SET_SUPER_RFID_ACK    0x85
+
+
+#define CAN_SOURCE_ID_QR_CODE_UPLOAD_1      0x90
+#define CAN_SOURCE_ID_QR_CODE_UPLOAD_2      0x91
+#define CAN_SOURCE_ID_QR_CODE_UPLOAD_3      0x92
 
 
 enum
@@ -111,7 +117,7 @@ class SmartLock
         }
         int param_init(void);
 
-        int unlock(uint32_t to_unlock);
+        int unlock(void);
         int get_lock_version(void);
         int set_super_pw(std::string super_pw);
         int set_super_rfid(std::string super_rfid);

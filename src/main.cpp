@@ -116,9 +116,9 @@ int main(int argc, char **argv)
             usleep(100*1000);
             smart_lock->get_lock_version();
             init_flag = true;
-            smart_lock->unlock(0x11111111);
-            smart_lock->set_super_pw("1278");
-            smart_lock->set_super_rfid("1055");
+            //smart_lock->unlock(0x11111111);
+            //smart_lock->set_super_pw("5678");
+            //smart_lock->set_super_rfid("1055");
 
         }
         if(is_need_update_rfid_pw == true)
@@ -126,11 +126,11 @@ int main(int argc, char **argv)
             static int time_cnt = 0;
             if(time_cnt == 40)
             {
-                //smart_lock->set_super_pw(sys_smart_lock);
+                smart_lock->set_super_pw(super_password);
             }
             if(time_cnt == 80)
             {
-                //smart_lock->set_super_rfid(sys_smart_lock);
+                smart_lock->set_super_rfid(super_rfid);
                 is_need_update_rfid_pw = false;
                 time_cnt = 0;
             }
@@ -141,12 +141,11 @@ int main(int argc, char **argv)
 
         }
         cnt++;
-        //smart_lock->handle_receive_data(sys_smart_lock);
 
         if(!to_unlock_serials.empty())
         {
             usleep(50*1000);
-            //smart_lock->unlock(sys_smart_lock);
+            smart_lock->unlock();
         }
 
         ros::spinOnce();
