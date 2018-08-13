@@ -160,6 +160,7 @@ void *agent_protocol_process(void* arg)
         {
             static int time_cnt = 0;
             static int send_cnt = 0;
+
             if(time_cnt % ((SEND_TO_AGENT_PERIOD*AGENT_THREAD_HZ) / 1000) == 0)
             {
                 pSmartLock->pub_info_to_agent(uuid, type, code, result,t);
@@ -169,6 +170,7 @@ void *agent_protocol_process(void* arg)
                     is_need_to_pub = false;
                     is_pub_complete = true;
                     send_cnt = 0;
+                    time_cnt = (SEND_TO_AGENT_PERIOD*AGENT_THREAD_HZ) / 1000 - 1;
                 }
             }
             time_cnt++;
