@@ -48,6 +48,23 @@ enum
 #define CAN_SOURCE_ID_QR_CODE_UPLOAD_2      0x91
 #define CAN_SOURCE_ID_QR_CODE_UPLOAD_3      0x92
 
+#define CAN_SOURCE_ID_KEY_TEST_UPLOAD       0xa0
+
+
+
+
+#define KEY_VALUE_B        (1<<0)
+#define KEY_VALUE_9        (1<<1)
+#define KEY_VALUE_8        (1<<2)
+#define KEY_VALUE_7        (1<<3)
+#define KEY_VALUE_4        (1<<4)
+#define KEY_VALUE_5        (1<<5)
+#define KEY_VALUE_6        (1<<6)
+#define KEY_VALUE_0        (1<<7)
+#define KEY_VALUE_1        (1<<8)
+#define KEY_VALUE_2        (1<<9)
+#define KEY_VALUE_3        (1<<10)
+#define KEY_VALUE_A        (1<<11)
 
 enum
 {

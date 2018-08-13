@@ -827,6 +827,68 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 ROS_INFO("get lock mcu version : %s",this->mcu_version.c_str());
                 break;
             }
+
+        case CAN_SOURCE_ID_KEY_TEST_UPLOAD:
+            {
+                ROS_INFO("get key test value upload. ");
+                ROS_INFO("get key test value upload. data len is %d ", data_len);
+
+                if( 2 == data_len)
+                {
+                    uint16_t key = *(uint16_t*)&msg->Data[0];
+                    ROS_INFO("get key test value:  0x%x", key);
+                    if(key & KEY_VALUE_0)
+                    {
+                        ROS_WARN("get key  0");
+                    }
+                    if(key & KEY_VALUE_1)
+                    {
+                        ROS_WARN("get key  1");
+                    }
+                    if(key & KEY_VALUE_2)
+                    {
+                        ROS_WARN("get key  2");
+                    }
+                    if(key & KEY_VALUE_3)
+                    {
+                        ROS_WARN("get key  3");
+                    }
+                    if(key & KEY_VALUE_4)
+                    {
+                        ROS_WARN("get key  4");
+                    }
+                    if(key & KEY_VALUE_5)
+                    {
+                        ROS_WARN("get key  5");
+                    }
+                    if(key & KEY_VALUE_6)
+                    {
+                        ROS_WARN("get key  6");
+                    }
+                    if(key & KEY_VALUE_7)
+                    {
+                        ROS_WARN("get key  7");
+                    }
+                    if(key & KEY_VALUE_8)
+                    {
+                        ROS_WARN("get key  8");
+                    }
+                    if(key & KEY_VALUE_9)
+                    {
+                        ROS_WARN("get key  9");
+                    }
+                    if(key & KEY_VALUE_A)
+                    {
+                        ROS_WARN("get key  a");
+                    }
+                    if(key & KEY_VALUE_B)
+                    {
+                        ROS_WARN("get key  b");
+                    }
+                }
+
+
+            }
         
         default : break;
 
