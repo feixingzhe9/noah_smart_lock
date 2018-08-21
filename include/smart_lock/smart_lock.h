@@ -16,19 +16,9 @@ using json = nlohmann::json;
 
 #define PASSWORD_LEN                4
 #define RFID_LEN                    4
-enum
-{
-    FRAME_TYPE_UNLOCK           =  0x01,
-    FRAME_TYPE_LOCK_STATUS      =  0x02,
-    FRAME_TYPE_PW_UPLOAD        =  0x03,
-    FRAME_TYPE_RFID_UPLOAD      =  0x04,
-    FRAME_TYPE_QR_CODE_UPLOAD   =  0x05,
-    FRAME_TYPE_SET_SUPER_PW     =  0x06,
-    FRAME_TYPE_SET_SUPER_RFID   =  0x07,
 
-    FRAME_TYPE_LOCK_VERSION     =  0x20,
-
-}FRAME_TYPE_E;
+#define SUPER_PASSWORD_LEN          PASSWORD_LEN
+#define SUPER_RFID_LEN              RFID_LEN
 
 #define CAN_SOURCE_ID_GET_VERSION           0x01
 
@@ -152,7 +142,7 @@ class SmartLock
         can_long_frame  long_frame;
 
         std::string mcu_version;
-        const std::string mcu_version_param = "mcu_lock_version";
+        const std::string mcu_version_param = "mcu_smart_lock_version";
 
         json j;
 

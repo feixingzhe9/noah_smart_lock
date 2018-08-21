@@ -38,13 +38,9 @@ boost::mutex mtx_agent;
 //boost::mutex mtx_smart_lock;
 static int led_over_time_flag = 0;
 static int last_unread_bytes = 0;
-//static unsigned char recv_buf_last[BUF_LEN] = {0};
 
 smart_lock_t    sys_smart_lock_ram;
 smart_lock_t    *sys_smart_lock = &sys_smart_lock_ram;
-
-
-
 
 std::vector<lock_serials_stauts_t> lock_serials_status;
 std::vector<lock_serials_stauts_t> lock_serials_status_ack;
@@ -227,7 +223,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                 }
 
                 rfid = get_table_super_rfid_to_ram(db_, TABLE_SUPER_RFID_PW); //need to add mutex
-                if(rfid.size() != 4)
+                if(rfid.size() != RFID_LEN)
                 {
                     ROS_ERROR("%s: get wrong rfid: %s",__func__, rfid.data());
                     is_need_update_rfid_pw = false;
@@ -238,7 +234,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                 }
 
                 password = get_table_super_pw_to_ram(db_, TABLE_SUPER_RFID_PW); //need to add mutex
-                if(password.size() != 4)
+                if(password.size() != PASSWORD_LEN)
                 {
                     ROS_ERROR("%s: get wrong password: %s",__func__, password.data());
                     is_need_update_rfid_pw = false;
@@ -441,7 +437,7 @@ int SmartLock::unlock(void)     // done
 int SmartLock::set_super_pw(std::string super_pw)
 {
     int error = -1;
-    if(super_pw.size() == 4)
+    if(super_pw.size() == SUPER_PASSWORD_LEN)
     {
         ROS_WARN("start to set super pass word ...");
 
@@ -474,7 +470,7 @@ int SmartLock::set_super_pw(std::string super_pw)
 int SmartLock::set_super_rfid(std::string super_rfid)
 {
     int error = -1;
-    if(super_rfid.size() == 4)
+    if(super_rfid.size() == SUPER_RFID_LEN)
     {
         ROS_WARN("start to set super pass word ...");
 
@@ -581,17 +577,17 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
     switch(source_id)
     {
         case CAN_SOURCE_ID_UNLOCK:
-            ROS_INFO("get unlock ack from mcu"); 
+            ROS_INFO("get unlock ack from mcu");
             break;
 
         case CAN_SOURCE_ID_RFID_UPLOAD:
-            ROS_INFO("get rfid upload info from mcu"); 
-            if(data_len == 4)
+            ROS_INFO("get rfid upload info from mcu");
+            if(data_len == RFID_LEN)
             {
                 std::string rfid;
                 uint8_t status = 1;
                 uint16_t rfid_int = 0;
-                rfid.resize(4);
+                rfid.resize(RFID_LEN);
                 rfid.clear();
                 rfid_int = msg->Data[2];
                 rfid_int = rfid_int<<8;
@@ -607,19 +603,19 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 {
                     std::string rfid_1 = "0";
                     std::string rfid_2_4 = std::to_string(rfid_int);
-                    rfid = rfid_1 + rfid_2_4; 
+                    rfid = rfid_1 + rfid_2_4;
                 }
                 else if(rfid_int >= 10)
                 {
                     std::string rfid_1_2 = "00";
                     std::string rfid_3_4 = std::to_string(rfid_int);
-                    rfid = rfid_1_2 + rfid_3_4; 
+                    rfid = rfid_1_2 + rfid_3_4;
                 }
                 else
                 {
                     std::string rfid_1_3 = "000";
                     std::string rfid_4 = std::to_string(rfid_int);
-                    rfid = rfid_1_3 + rfid_4; 
+                    rfid = rfid_1_3 + rfid_4;
                 }
                 ROS_INFO("receive RFID: %s",rfid.c_str());
                 input_rfid.push_back(rfid);
@@ -662,14 +658,14 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
 
         case CAN_SOURCE_ID_PW_UPLOAD:
             {
-                if(data_len == 4)
+                if(data_len == PASSWORD_LEN)
                 {
                     ROS_INFO("get password upload");
                     std::string pw;
                     uint8_t status = 1;
-                    pw.resize(4);
+                    pw.resize(PASSWORD_LEN);
                     pw.clear();
-                    for(uint8_t i = 0; i < 4; i++)
+                    for(uint8_t i = 0; i < PASSWORD_LEN; i++)
                     {
                         pw.push_back(msg->Data[i]);
                     }
@@ -713,7 +709,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
 
         case CAN_SOURCE_ID_QR_CODE_UPLOAD_1:
             {
-                ROS_INFO("get upload QR 1  code info."); 
+                ROS_INFO("get upload QR 1  code info.");
                 std::string qr_code;
                 qr_code.clear();
                 int i = 0;
@@ -737,7 +733,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
             break;
         case CAN_SOURCE_ID_QR_CODE_UPLOAD_2:
             {
-                ROS_INFO("get upload QR 2  code info."); 
+                ROS_INFO("get upload QR 2  code info.");
                 std::string qr_code;
                 qr_code.clear();
                 int i = 0;
@@ -761,7 +757,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
             break;
         case CAN_SOURCE_ID_QR_CODE_UPLOAD_3:
             {
-                ROS_INFO("get upload QR 3  code info."); 
+                ROS_INFO("get upload QR 3  code info.");
                 std::string qr_code;
                 qr_code.clear();
                 int i = 0;
@@ -786,7 +782,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
 
         case CAN_SOURCE_ID_SET_SUPER_PW_ACK:
             {
-                ROS_INFO("get ack of set super password from mcu"); 
+                ROS_INFO("get ack of set super password from mcu");
                 std::string super_password_ack;
                 super_password_ack.clear();
                 if(PASSWORD_LEN == data_len)
@@ -802,7 +798,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
 
         case CAN_SOURCE_ID_SET_SUPER_RFID_ACK:
             {
-                ROS_INFO("get ack of set super rfid from mcu"); 
+                ROS_INFO("get ack of set super rfid from mcu");
                 std::string super_rfid_ack;
                 super_rfid_ack.clear();
                 if(RFID_LEN == data_len)
@@ -818,7 +814,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
 
         case CAN_SOURCE_ID_GET_VERSION:
             {
-                ROS_INFO("get mcu version info. "); 
+                ROS_INFO("get mcu version info. ");
                 for(int i = 0; i < data_len; i++)
                 {
                     this->mcu_version.push_back(msg->Data[i]);
@@ -889,7 +885,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
 
 
             }
-        
+
         default : break;
 
     }
