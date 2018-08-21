@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs roslib
+  CATKIN_DEPENDS roscpp std_msgs roslib message_runtime
 #  LIBRARIES ${PROJECT_NAME}
 )
 
@@ -18,6 +18,7 @@ catkin_package(
 ## Build ##
 ###########
 set (CMAKE_CXX_FLAGS "-std=c++11")
+
 include_directories(
   ${catkin_INCLUDE_DIRS}
   include/smart_lock
@@ -29,6 +30,9 @@ add_executable(smart_lock_node
     src/data_proc.cpp
 )
 
+add_dependencies(smart_lock_node
+    ${catkin_EXPORTED_TARGETS}
+)
 #set(EXTRALIB_BIN ${PROJECT_SOURCE_DIR}/lib/libsqlite.so.0)
 
 
