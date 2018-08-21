@@ -536,6 +536,94 @@ void SmartLock::pub_json_msg_to_app( const nlohmann::json j_msg)
     //this->noah_smart_lock_pub.publish(pub_json_msg);
 }
 
+uint8_t SmartLock::map_key_value(uint16_t key_value)
+{
+    uint8_t key_true_value = 0;
+
+    if(key_value & KEY_VALUE_0)
+    {
+        key_true_value = '0';
+    }
+    else if(key_value & KEY_VALUE_1)
+    {
+        key_true_value = '1';
+    }
+    else if(key_value & KEY_VALUE_2)
+    {
+        key_true_value = '2';
+    }
+    else if(key_value & KEY_VALUE_3)
+    {
+        key_true_value = '3';
+    }
+    else if(key_value & KEY_VALUE_4)
+    {
+        key_true_value = '4';
+    }
+    else if(key_value & KEY_VALUE_5)
+    {
+        key_true_value = '5';
+    }
+    else if(key_value & KEY_VALUE_6)
+    {
+        key_true_value = '6';
+    }
+    else if(key_value & KEY_VALUE_7)
+    {
+        key_true_value = '7';
+    }
+    else if(key_value & KEY_VALUE_8)
+    {
+        key_true_value = '8';
+    }
+    else if(key_value & KEY_VALUE_9)
+    {
+        key_true_value = '9';
+    }
+    else if(key_value & KEY_VALUE_A)
+    {
+        key_true_value = 'a';
+    }
+    else if(key_value & KEY_VALUE_B)
+    {
+        key_true_value = 'b';
+    }
+    else
+    {
+        return 0;
+    }
+
+    return key_true_value;
+}
+
+std::string SmartLock::build_rfid(int rfid_int)
+{
+    std::string rfid;
+    if(rfid_int >= 1000)
+    {
+        rfid = std::to_string(rfid_int);
+    }
+    else if(rfid_int >= 100)
+    {
+        std::string rfid_1 = "0";
+        std::string rfid_2_4 = std::to_string(rfid_int);
+        rfid = rfid_1 + rfid_2_4;
+    }
+    else if(rfid_int >= 10)
+    {
+        std::string rfid_1_2 = "00";
+        std::string rfid_3_4 = std::to_string(rfid_int);
+        rfid = rfid_1_2 + rfid_3_4;
+    }
+    else
+    {
+        std::string rfid_1_3 = "000";
+        std::string rfid_4 = std::to_string(rfid_int);
+        rfid = rfid_1_3 + rfid_4;
+    }
+    return rfid;
+}
+
 void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg)
 {
     mrobot_driver_msgs::vci_can can_msg;
@@ -548,15 +636,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
     {
         return;
     }
-#if 0
-    if(this->is_log_on == true)
-    {
-        for(uint8_t i = 0; i < msg->DataLen; i++)
-        {
-            ROS_INFO("msg->Data[%d] = 0x%x",i,msg->Data[i]);
-        }
-    }
-#endif
+
     can_msg.ID = msg->ID;
     id.CANx_ID = can_msg.ID;
     //can_msg.DataLen = msg->DataLen;
@@ -594,31 +674,10 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 rfid_int += msg->Data[3];
 
                 ROS_INFO("rfid int data :%d",rfid_int);
-
-                if(rfid_int >= 1000)
-                {
-                    rfid = std::to_string(rfid_int);
-                }
-                else if(rfid_int >= 100)
-                {
-                    std::string rfid_1 = "0";
-                    std::string rfid_2_4 = std::to_string(rfid_int);
-                    rfid = rfid_1 + rfid_2_4;
-                }
-                else if(rfid_int >= 10)
-                {
-                    std::string rfid_1_2 = "00";
-                    std::string rfid_3_4 = std::to_string(rfid_int);
-                    rfid = rfid_1_2 + rfid_3_4;
-                }
-                else
-                {
-                    std::string rfid_1_3 = "000";
-                    std::string rfid_4 = std::to_string(rfid_int);
-                    rfid = rfid_1_3 + rfid_4;
-                }
+                rfid = this->build_rfid(rfid_int);
                 ROS_INFO("receive RFID: %s",rfid.c_str());
                 input_rfid.push_back(rfid);
+
                 for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
                 {
                     if((*it).rfid == rfid)
@@ -833,54 +892,8 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 {
                     uint16_t key = *(uint16_t*)&msg->Data[0];
                     ROS_INFO("get key test value:  0x%x", key);
-                    if(key & KEY_VALUE_0)
-                    {
-                        ROS_WARN("get key  0");
-                    }
-                    if(key & KEY_VALUE_1)
-                    {
-                        ROS_WARN("get key  1");
-                    }
-                    if(key & KEY_VALUE_2)
-                    {
-                        ROS_WARN("get key  2");
-                    }
-                    if(key & KEY_VALUE_3)
-                    {
-                        ROS_WARN("get key  3");
-                    }
-                    if(key & KEY_VALUE_4)
-                    {
-                        ROS_WARN("get key  4");
-                    }
-                    if(key & KEY_VALUE_5)
-                    {
-                        ROS_WARN("get key  5");
-                    }
-                    if(key & KEY_VALUE_6)
-                    {
-                        ROS_WARN("get key  6");
-                    }
-                    if(key & KEY_VALUE_7)
-                    {
-                        ROS_WARN("get key  7");
-                    }
-                    if(key & KEY_VALUE_8)
-                    {
-                        ROS_WARN("get key  8");
-                    }
-                    if(key & KEY_VALUE_9)
-                    {
-                        ROS_WARN("get key  9");
-                    }
-                    if(key & KEY_VALUE_A)
-                    {
-                        ROS_WARN("get key  a");
-                    }
-                    if(key & KEY_VALUE_B)
-                    {
-                        ROS_WARN("get key  b");
-                    }
+                    char key_value = map_key_value(key);
+                    ROS_INFO("get key: %c",key_value);
                 }
 
 
@@ -891,299 +904,3 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
     }
 }
 
-#if 0
-int SmartLock::handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf)
-{
-    int frame_len = 0;
-    int i = 0;
-    int j = 0;
-    int command = 0;
-    unsigned char check_data = 0;
-    uint8_t cmd_type = 0;
-    uint8_t data_direction = 0;
-    uint8_t data_len = 0;
-    int error = -1;
-    frame_len = frame_buf[1] - 1;
-
-    for(i=0;i<frame_len-2;i++)
-    {
-        check_data += frame_buf[i];
-    }
-    check_data += 0xcc;
-    if(check_data != frame_buf[frame_len-2] || PROTOCOL_TAIL != frame_buf[frame_len -1])
-    {
-        PowerboardInfo("smart lock receive frame check error");
-        //return -1;
-    }
-    PowerboardInfo("smart lock recieve data check OK.");
-
-    cmd_type = frame_buf[2];
-    data_direction = frame_buf[3];
-    data_len = frame_buf[1];
-    ROS_INFO("cmd_type : %d",cmd_type);
-    ROS_INFO("direction : %d",data_direction);
-    ROS_INFO("data_len : %d",data_len);
-    switch(data_direction)
-    {
-        case DATA_DIRECTION_LOCK_ACK:
-            switch(cmd_type)
-            {
-                case FRAME_TYPE_UNLOCK:
-                    {
-                        lock_serials_stauts_t single_status;
-
-                        ROS_WARN("UNLOCK : receive ack data from lock.");
-                        //lock_serials_status
-#if 0
-                        for(uint8_t i = 0; i < (data_len -6)/2; i++)
-                        {
-                            single_status.lock_id = frame_buf[4+i*2];
-                            single_status.status = (bool)frame_buf[4+i*2 + 1];
-                            std::vector<lock_serials_stauts_t>::iterator it = lock_serials_status.begin();
-                            //lock_serials_stauts_t to_find;
-                            //to_find.lock_id = 1;
-                            //to_find.status = 0;
-                            //std::vector<lock_serials_stauts_t>::iterator result = find(lock_serials_status.begin(), lock_serials_status.end(), to_find);
-                            for( ; it != lock_serials_status.end(); it++)
-                            {
-                                if((*it).lock_id == single_status.lock_id)
-                                {
-                                    (*it).status = single_status.status;
-                                    break;
-                                }
-                            }
-                            if(it == lock_serials_status.end())
-                            {
-                                lock_serials_status.push_back(single_status);
-                            }
-
-
-                            it = lock_serials_status_ack.begin();
-                            for( ; it != lock_serials_status_ack.end(); it++)
-                            {
-                                if((*it).lock_id == single_status.lock_id)
-                                {
-                                    (*it).status = single_status.status;
-                                    break;
-                                }
-                            }
-                            if(it == lock_serials_status_ack.end())
-                            {
-                                lock_serials_status_ack.push_back(single_status);
-                            }
-
-
-                            lock_serials_status_ack.push_back(single_status);
-                        }
-#else
-                        int lock_status_bit = 0;
-                        lock_status_bit += frame_buf[4];
-                        lock_status_bit += frame_buf[5] << 8;
-                        lock_status_bit += frame_buf[6] << 16;
-                        lock_status_bit += frame_buf[7] << 24;
-                        ROS_INFO("lock status bit : %d",lock_status_bit);
-                        lock_serials_status.clear();
-                        for(int j = 0; j < 32; j++)
-                        {
-                            single_status.lock_id = j + 1;
-                            single_status.status = 0;
-                            if(lock_status_bit & (1<<j))
-                            {
-                                ROS_INFO("lock %d status is on", j + 1);
-                                single_status.status = 1;
-                            }
-                            lock_serials_status.push_back(single_status);
-                        }
-
-#endif
-                        for(std::vector<lock_serials_stauts_t>::iterator my_iterator = lock_serials_status.begin() ;\
-                                my_iterator != lock_serials_status.end(); my_iterator++)
-                        {
-                            ROS_INFO("lock id:  %d,  status : %d",(*my_iterator).lock_id, (*my_iterator).status);
-                        }
-                    }
-                    break;
-                case FRAME_TYPE_LOCK_VERSION:
-                    {
-
-                        lock_version.clear();
-                        for(uint8_t i = 0; i < 4; i++)
-                        {
-                            lock_version.push_back(frame_buf[4+i]);
-                        }
-                        ROS_INFO("get lock version : %s",lock_version.data());
-                    }
-                    break;
-
-                case FRAME_TYPE_SET_SUPER_PW:
-                    {
-                        uint8_t status = 0;
-                        status = frame_buf[4];
-                        ROS_WARN("get lock super pass word ack: status is %d",status);
-                        set_super_pw_ack.clear();
-                        for(uint8_t i = 0; i < 4; i++)
-                        {
-                            set_super_pw_ack.push_back(frame_buf[5+i]);
-                        }
-                        ROS_INFO("get lock super pass word ack : %s",set_super_pw_ack.data());
-                    }
-                    break;
-
-                case FRAME_TYPE_SET_SUPER_RFID:
-                    {
-                        uint8_t status = 0;
-                        status = frame_buf[4];
-                        ROS_WARN("get lock super RFID ack: status is %d",status);
-                        set_super_rfid_ack.clear();
-                        for(uint8_t i = 0; i < 4; i++)
-                        {
-                            set_super_rfid_ack.push_back(frame_buf[5+i]);
-                        }
-                        ROS_INFO("get lock super RFID ack : %s",set_super_rfid_ack.data());
-                    }
-                    break;
-
-                default :
-                    break;
-
-            }
-
-            break;
-        case DATA_DIRECTION_LOCK_TO_X86:
-            switch(cmd_type)
-            {
-                case FRAME_TYPE_PW_UPLOAD:
-                    {
-                        std::string pw;
-                        uint8_t status = 1;
-                        pw.resize(4);
-                        pw.clear();
-                        for(uint8_t i = 0; i < 4; i++)
-                        {
-                            pw.push_back(frame_buf[4+i]);
-                        }
-                        ROS_INFO("receive pass word: %s",pw.data());
-                        input_pw.push_back(pw);
-
-                        for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
-                        {
-                            if((*it).password == pw)
-                            {
-                                ROS_INFO("get right pass word");
-                                do
-                                {
-                                    boost::mutex::scoped_lock(tmx_smart_lock);
-                                    to_unlock_serials.push_back((*it).door_id);
-                                }while(0);
-                                status = 0;
-                            }
-                        }
-                        std::sort(to_unlock_serials.begin(),to_unlock_serials.end());
-                        to_unlock_serials.erase(unique(to_unlock_serials.begin(), to_unlock_serials.end()), to_unlock_serials.end());
-                        if(pw == super_password)
-                        {
-                            status = 0;
-                            ROS_WARN("get right super password");
-                        }
-                        pub_to_agent_t tmp;
-                        tmp.type = 3;
-                        tmp.code = pw;
-                        tmp.result = status;
-                        do
-                        {
-                            boost::mutex::scoped_lock(mtx_agent);
-                            pub_to_agent_vector.push_back(tmp);
-                        }while(0);
-                    }
-                    break;
-
-                case FRAME_TYPE_RFID_UPLOAD:
-                    {
-                        std::string rfid;
-                        uint8_t status = 1;
-                        rfid.resize(4);
-                        rfid.clear();
-                        for(uint8_t i = 0; i < data_len - 7; i++)
-                        {
-                            rfid.push_back(frame_buf[4+i]);
-                        }
-                        ROS_INFO("receive RFID: %s",rfid.data());
-                        input_rfid.push_back(rfid);
-                        for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
-                        {
-                            if((*it).rfid == rfid)
-                            {
-                                ROS_INFO("get right RFID  ID");
-                                to_unlock_serials.push_back((*it).door_id);
-                                status = 0;
-                                do
-                                {
-                                    boost::mutex::scoped_lock(tmx_smart_lock);
-                                    to_unlock_serials.push_back((*it).door_id);
-                                }while(0);
-
-                            }
-                        }
-
-                        std::sort(to_unlock_serials.begin(),to_unlock_serials.end());
-                        to_unlock_serials.erase(unique(to_unlock_serials.begin(), to_unlock_serials.end()), to_unlock_serials.end());
-
-                        if(rfid == super_rfid)
-                        {
-                            status = 0;
-                            ROS_WARN("get right super RFID");
-                        }
-                        pub_to_agent_t tmp;
-                        tmp.type = 2;
-                        tmp.code = rfid;
-                        tmp.result = status;
-                        do
-                        {
-                            boost::mutex::scoped_lock(mtx_agent);
-                            pub_to_agent_vector.push_back(tmp);
-                        }while(0);
-                    }
-                    break;
-                case FRAME_TYPE_QR_CODE_UPLOAD:
-                    {
-                        std::string qr_code;
-                        qr_code.clear();
-                        int i = 0;
-                        for(i = 0; i < data_len - 8; i++)
-                        {
-                            qr_code.push_back(frame_buf[4+i]);
-                        }
-                        if(frame_buf[4 + i] != 0x0d)
-                        {
-                            ROS_WARN("frame_buf[ %d ] = 0x%X", 4 + i, frame_buf[4 + i]);
-                            qr_code.push_back(frame_buf[4 + i]);
-                        }
-                        ROS_WARN("receive QR code: %s",qr_code.c_str());
-                        input_qr_code.push_back(qr_code);
-                        pub_to_agent_t tmp;
-                        tmp.type = 1;
-                        tmp.code = qr_code;
-                        tmp.result = 0;
-                        do
-                        {
-                            boost::mutex::scoped_lock(mtx_agent);
-                            pub_to_agent_vector.push_back(tmp);
-                        }while(0);
-                    }
-                    break;
-
-                default :
-                    break;
-
-            }
-            break;
-        case DATA_DIRECTION_X86_ACK:
-            break;
-        default :
-            ROS_ERROR("data direciton ERROR: %d", data_direction);
-            break;
-
-    }
-    return error;
-}
-#endif

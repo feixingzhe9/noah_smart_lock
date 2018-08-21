@@ -131,8 +131,6 @@ class SmartLock
         void pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t);
 
     private:
-        uint8_t CalCheckSum(uint8_t *data, uint8_t len);
-        int handle_rev_frame(smart_lock_t *sys,unsigned char * frame_buf);
         ros::NodeHandle n;
         ros::Publisher pub_to_agent;
         ros::Subscriber sub_from_agent;
@@ -150,6 +148,10 @@ class SmartLock
         void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
 
         void rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg);
+
+        std::string build_rfid(int rfid_int);
+
+        uint8_t map_key_value(uint16_t key);
 
         lock_pivas_t lock_match_tmp;
 
