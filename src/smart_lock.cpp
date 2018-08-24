@@ -895,9 +895,46 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                     char key_value = map_key_value(key);
                     ROS_INFO("get key: %c",key_value);
                 }
-
-
+                break;
             }
+
+        case CAN_SOURCE_ID_CAN_LOAD_TEST:
+           {
+               static uint32_t real_cnt = 0;
+               static uint32_t last_cnt = 0;
+               static uint32_t lost_cnt = 0;
+               static ros::Time start_time;
+               std::string test_str;
+               uint32_t cnt = *(uint32_t*)&msg->Data[0];
+               if(0 == cnt)
+               {
+                   ROS_INFO("start to CAN bus load test . . . ");
+                   real_cnt = 0;
+                   last_cnt = 0;
+                   lost_cnt = 0;
+                   start_time = ros::Time::now();
+               }
+               else
+               {
+                   ROS_INFO("receive cnt from MCU: %d",cnt);
+                   real_cnt++;
+                   if(cnt != last_cnt + 1)
+                   {
+                       ROS_ERROR("CAN  frame lost ! ! ! !");
+                       lost_cnt++;
+                   }
+                   last_cnt = cnt;
+                   ROS_INFO("real cnt:       %d",real_cnt);
+                   ROS_INFO("lost frame cnt: %d",lost_cnt);
+                   for(uint32_t i = 4; i < data_len; i++)
+                   {
+                       test_str.push_back(msg->Data[i]);
+                   }
+                   ROS_INFO("get str: %s", test_str.c_str());
+                   ROS_INFO("duration time: %f second",ros::Time::now().toSec() - start_time.toSec());
+               }
+               break;
+           }
 
         default : break;
 

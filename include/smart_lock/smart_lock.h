@@ -40,7 +40,7 @@ using json = nlohmann::json;
 
 #define CAN_SOURCE_ID_KEY_TEST_UPLOAD       0xa0
 
-
+#define CAN_SOURCE_ID_CAN_LOAD_TEST         0xff
 
 
 #define KEY_VALUE_B        (1<<0)
