@@ -83,6 +83,10 @@ typedef struct
 typedef struct
 {
     uint8_t type;
+#define TYPE_QR_CODE                1
+#define TYPE_RFID_CODE              2
+#define TYPE_PASSWORD_CODE          3
+
     std::string code;
     uint8_t result;
 }pub_to_agent_t;
@@ -150,6 +154,10 @@ class SmartLock
         void rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg);
 
         std::string build_rfid(int rfid_int);
+        std::string parsing_qr_code(mrobot_driver_msgs::vci_can* msg);
+
+        void start_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
+
 
         uint8_t map_key_value(uint16_t key);
 

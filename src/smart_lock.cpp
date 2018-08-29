@@ -624,6 +624,38 @@ std::string SmartLock::build_rfid(int rfid_int)
     return rfid;
 }
 
+std::string SmartLock::parsing_qr_code(mrobot_driver_msgs::vci_can* msg)
+{
+    std::string qr_code;
+    qr_code.clear();
+
+    for(uint8_t i = 0; i < msg->DataLen - 1; i++)
+    {
+        qr_code.push_back(msg->Data[i]);
+    }
+    if(msg->Data[msg->DataLen - 1] != 0x0d)
+    {
+        qr_code.push_back(msg->Data[msg->DataLen - 1]);
+    }
+
+    return qr_code;
+}
+
+
+void SmartLock::start_to_pub_to_agent( std::string code, uint8_t result, uint8_t type)
+{
+    pub_to_agent_t pub_to_agent;
+    pub_to_agent.code = code;
+    pub_to_agent.type = type;
+    pub_to_agent.result = result;
+    do
+    {
+        boost::mutex::scoped_lock(mtx_agent);
+        pub_to_agent_vector.push_back(pub_to_agent);
+    }while(0);
+
+}
+
 void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg)
 {
     mrobot_driver_msgs::vci_can can_msg;
@@ -670,7 +702,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 rfid.resize(RFID_LEN);
                 rfid.clear();
                 rfid_int = msg->Data[2];
-                rfid_int = rfid_int<<8;
+                rfid_int = rfid_int << 8;
                 rfid_int += msg->Data[3];
 
                 ROS_INFO("rfid int data :%d",rfid_int);
@@ -771,71 +803,43 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 ROS_INFO("get upload QR 1  code info.");
                 std::string qr_code;
                 qr_code.clear();
-                int i = 0;
-                for(i = 0; i < data_len; i++)
-                {
-                    qr_code.push_back(msg->Data[i]);
-                }
+
+                qr_code = parsing_qr_code(msg);
 
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
-                input_qr_code.push_back(qr_code);
-                pub_to_agent_t tmp;
-                tmp.type = 1;
-                tmp.code = qr_code;
-                tmp.result = 0;
-                do
-                {
-                    boost::mutex::scoped_lock(mtx_agent);
-                    pub_to_agent_vector.push_back(tmp);
-                }while(0);
+                //input_qr_code.push_back(qr_code);
+
+                start_to_pub_to_agent(qr_code, TYPE_QR_CODE, 0);
             }
             break;
+
         case CAN_SOURCE_ID_QR_CODE_UPLOAD_2:
             {
                 ROS_INFO("get upload QR 2  code info.");
                 std::string qr_code;
                 qr_code.clear();
-                int i = 0;
-                for(i = 0; i < data_len; i++)
-                {
-                    qr_code.push_back(msg->Data[i]);
-                }
+
+                qr_code = parsing_qr_code(msg);
 
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
-                input_qr_code.push_back(qr_code);
-                pub_to_agent_t tmp;
-                tmp.type = 1;
-                tmp.code = qr_code;
-                tmp.result = 0;
-                do
-                {
-                    boost::mutex::scoped_lock(mtx_agent);
-                    pub_to_agent_vector.push_back(tmp);
-                }while(0);
+                //input_qr_code.push_back(qr_code);
+
+                start_to_pub_to_agent(qr_code, TYPE_QR_CODE, 0);
             }
             break;
+
         case CAN_SOURCE_ID_QR_CODE_UPLOAD_3:
             {
                 ROS_INFO("get upload QR 3  code info.");
                 std::string qr_code;
                 qr_code.clear();
-                int i = 0;
-                for(i = 0; i < data_len; i++)
-                {
-                    qr_code.push_back(msg->Data[i]);
-                }
+
+                qr_code = parsing_qr_code(msg);
 
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
-                input_qr_code.push_back(qr_code);
-                pub_to_agent_t tmp;
-                tmp.type = 1;
-                tmp.code = qr_code;
-                tmp.result = 0;
-                do
-                {
-                    boost::mutex::scoped_lock(mtx_agent);
-                    pub_to_agent_vector.push_back(tmp);
-                }while(0);
+                //input_qr_code.push_back(qr_code);
+
+                start_to_pub_to_agent(qr_code, TYPE_QR_CODE, 0);
             }
             break;
 
