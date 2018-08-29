@@ -158,6 +158,8 @@ class SmartLock
 
         void start_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
 
+        std::vector<int> get_door_id_by_rfid_password(std::string data, uint8_t type, uint8_t *match_result);
+
 
         uint8_t map_key_value(uint16_t key);
 

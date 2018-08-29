@@ -641,6 +641,38 @@ std::string SmartLock::parsing_qr_code(mrobot_driver_msgs::vci_can* msg)
     return qr_code;
 }
 
+std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8_t type, uint8_t *match_result)
+{
+    std::vector<int> to_unlock_tmp;
+    to_unlock_tmp.clear();
+
+    for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
+    {
+        if(type == TYPE_RFID_CODE)
+        {
+            if((*it).rfid == data)
+            {
+                ROS_INFO("get right RFID  ID");
+                to_unlock_tmp.push_back((*it).door_id);
+                *match_result = 0;
+            }
+        }
+        else if(type == TYPE_PASSWORD_CODE)
+        {
+            if((*it).password == data)
+            {
+                ROS_INFO("get right password");
+                to_unlock_tmp.push_back((*it).door_id);
+                *match_result = 0;
+            }
+        }
+    }
+
+    std::sort(to_unlock_tmp.begin(),to_unlock_tmp.end());
+    to_unlock_tmp.erase(unique(to_unlock_tmp.begin(), to_unlock_tmp.end()), to_unlock_tmp.end());
+
+    return to_unlock_tmp;
+}
 
 void SmartLock::start_to_pub_to_agent( std::string code, uint8_t result, uint8_t type)
 {
@@ -710,39 +742,15 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 ROS_INFO("receive RFID: %s",rfid.c_str());
                 input_rfid.push_back(rfid);
 
-                for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
-                {
-                    if((*it).rfid == rfid)
-                    {
-                        ROS_INFO("get right RFID  ID");
-                        to_unlock_serials.push_back((*it).door_id);
-                        status = 0;
-                        do
-                        {
-                            boost::mutex::scoped_lock(tmx_smart_lock);
-                            to_unlock_serials.push_back((*it).door_id);
-                        }while(0);
-
-                    }
-                }
-
-                std::sort(to_unlock_serials.begin(),to_unlock_serials.end());
-                to_unlock_serials.erase(unique(to_unlock_serials.begin(), to_unlock_serials.end()), to_unlock_serials.end());
+                to_unlock_serials = get_door_id_by_rfid_password(rfid, TYPE_RFID_CODE, &status);
 
                 if(rfid == super_rfid)
                 {
                     status = 0;
                     ROS_WARN("get right super RFID");
                 }
-                pub_to_agent_t tmp;
-                tmp.type = 2;
-                tmp.code = rfid;
-                tmp.result = status;
-                do
-                {
-                    boost::mutex::scoped_lock(mtx_agent);
-                    pub_to_agent_vector.push_back(tmp);
-                }while(0);
+
+                start_to_pub_to_agent(rfid, status, TYPE_RFID_CODE);
             }
 
             break;
@@ -763,38 +771,16 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                     ROS_INFO("receive pass word: %s",pw.data());
                     input_pw.push_back(pw);
 
-                    for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
-                    {
-                        if((*it).password == pw)
-                        {
-                            ROS_INFO("get right pass word");
-                            do
-                            {
-                                boost::mutex::scoped_lock(tmx_smart_lock);
-                                to_unlock_serials.push_back((*it).door_id);
-                            }while(0);
-                            status = 0;
-                        }
-                    }
-                    std::sort(to_unlock_serials.begin(),to_unlock_serials.end());
-                    to_unlock_serials.erase(unique(to_unlock_serials.begin(), to_unlock_serials.end()), to_unlock_serials.end());
+                    to_unlock_serials = get_door_id_by_rfid_password(pw, TYPE_PASSWORD_CODE, &status);
+
                     if(pw == super_password)
                     {
                         status = 0;
                         ROS_WARN("get right super password");
                     }
-                    pub_to_agent_t tmp;
-                    tmp.type = 3;
-                    tmp.code = pw;
-                    tmp.result = status;
-                    do
-                    {
-                        boost::mutex::scoped_lock(mtx_agent);
-                        pub_to_agent_vector.push_back(tmp);
-                    }while(0);
 
+                    start_to_pub_to_agent(pw, status, TYPE_PASSWORD_CODE);
                 }
-
             }
             break;
 
@@ -809,7 +795,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
                 //input_qr_code.push_back(qr_code);
 
-                start_to_pub_to_agent(qr_code, TYPE_QR_CODE, 0);
+                start_to_pub_to_agent(qr_code, 0, TYPE_QR_CODE);
             }
             break;
 
@@ -824,7 +810,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
                 //input_qr_code.push_back(qr_code);
 
-                start_to_pub_to_agent(qr_code, TYPE_QR_CODE, 0);
+                start_to_pub_to_agent(qr_code, 0, TYPE_QR_CODE);
             }
             break;
 
@@ -839,7 +825,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
                 //input_qr_code.push_back(qr_code);
 
-                start_to_pub_to_agent(qr_code, TYPE_QR_CODE, 0);
+                start_to_pub_to_agent(qr_code, 0, TYPE_QR_CODE);
             }
             break;
 
