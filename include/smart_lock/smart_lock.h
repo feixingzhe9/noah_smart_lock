@@ -56,6 +56,10 @@ using json = nlohmann::json;
 #define KEY_VALUE_3        (1<<10)
 #define KEY_VALUE_A        (1<<11)
 
+#define TYPE_QR_CODE                1
+#define TYPE_RFID_CODE              2
+#define TYPE_PASSWORD_CODE          3
+
 enum
 {
     DATA_DIRECTION_LOCK_TO_X86 = 1,
@@ -83,10 +87,6 @@ typedef struct
 typedef struct
 {
     uint8_t type;
-#define TYPE_QR_CODE                1
-#define TYPE_RFID_CODE              2
-#define TYPE_PASSWORD_CODE          3
-
     std::string code;
     uint8_t result;
 }pub_to_agent_t;
@@ -154,7 +154,7 @@ class SmartLock
         void rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg);
 
         std::string build_rfid(int rfid_int);
-        std::string parsing_qr_code(mrobot_driver_msgs::vci_can* msg);
+        std::string parse_qr_code(mrobot_driver_msgs::vci_can* msg);
 
         void start_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
 

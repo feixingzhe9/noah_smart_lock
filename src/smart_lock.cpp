@@ -624,18 +624,36 @@ std::string SmartLock::build_rfid(int rfid_int)
     return rfid;
 }
 
-std::string SmartLock::parsing_qr_code(mrobot_driver_msgs::vci_can* msg)
+std::string SmartLock::parse_qr_code(mrobot_driver_msgs::vci_can* msg)
 {
     std::string qr_code;
     qr_code.clear();
 
-    for(uint8_t i = 0; i < msg->DataLen - 1; i++)
+    for(uint8_t i = 0; i < msg->DataLen - 2; i++)
     {
         qr_code.push_back(msg->Data[i]);
     }
-    if(msg->Data[msg->DataLen - 1] != 0x0d)
+
+    uint8_t last1 = msg->Data[msg->DataLen - 1];
+    uint8_t last2 = msg->Data[msg->DataLen - 2];
+
+    if( last2!= 0x0d)   // CRLF
     {
-        qr_code.push_back(msg->Data[msg->DataLen - 1]);
+        qr_code.push_back(last2);
+    }
+    else
+    {
+        ROS_ERROR("get CRLF in end of QR code");
+        return qr_code;
+    }
+
+    if( (last1 != 0x09) && (last1 != 0x0a) && (last1 != 0x0d) ) //TAB CR LF
+    {
+        qr_code.push_back(last1);
+    }
+    else
+    {
+        ROS_ERROR("get %d in end of QR code", last1);
     }
 
     return qr_code;
@@ -790,7 +808,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 std::string qr_code;
                 qr_code.clear();
 
-                qr_code = parsing_qr_code(msg);
+                qr_code = parse_qr_code(msg);
 
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
                 //input_qr_code.push_back(qr_code);
@@ -805,7 +823,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 std::string qr_code;
                 qr_code.clear();
 
-                qr_code = parsing_qr_code(msg);
+                qr_code = parse_qr_code(msg);
 
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
                 //input_qr_code.push_back(qr_code);
@@ -820,7 +838,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 std::string qr_code;
                 qr_code.clear();
 
-                qr_code = parsing_qr_code(msg);
+                qr_code = parse_qr_code(msg);
 
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
                 //input_qr_code.push_back(qr_code);
