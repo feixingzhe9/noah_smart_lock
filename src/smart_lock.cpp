@@ -944,6 +944,27 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                break;
            }
 
+        case CAN_SOURCE_ID_LOCK_STATUS_UPLOAD:
+            {
+                static uint8_t lock_status_new[10] = {0};
+                static uint8_t lock_status_last[10] = {0};
+                uint8_t lock_num = data_len;
+                if(lock_num > 0)
+                {
+                    for(uint8_t i = 0; i < lock_num; i++)
+                    {
+                        lock_status_new[i] = msg->Data[i];
+                        if(lock_status_new[i] != lock_status_last[i])
+                        {
+                            ROS_INFO("lock %d status change to %d", i+1, lock_status_new[i]);
+                        }
+
+                        lock_status_last[i] = lock_status_new[i];
+                    }
+                }
+                break;
+            }
+
         default : break;
 
     }

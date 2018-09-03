@@ -39,6 +39,7 @@ using json = nlohmann::json;
 #define CAN_SOURCE_ID_QR_CODE_UPLOAD_3      0x92
 
 #define CAN_SOURCE_ID_KEY_TEST_UPLOAD       0xa0
+#define CAN_SOURCE_ID_LOCK_STATUS_UPLOAD    0xa1
 
 #define CAN_SOURCE_ID_CAN_LOAD_TEST         0xff
 
