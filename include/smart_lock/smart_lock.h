@@ -98,6 +98,7 @@ typedef struct
     std::string rfid;
     std::string password;
     uint32_t cnt;
+    ros::Time start_time;
 }loading_t;
 
 typedef struct
@@ -205,6 +206,9 @@ extern std::string get_table_super_rfid_to_ram(sqlite3 *db, std::string table);
 extern std::vector<lock_pivas_t> lock_match_db_vec;
 extern std::string super_rfid;
 extern std::string super_password;
+
+extern int door_num;
+extern int door_loading_unlock_exist_time;
 
 #endif
 

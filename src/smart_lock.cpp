@@ -68,6 +68,7 @@ std::string super_password = "1050";
 
 std::vector<loading_t> to_unlock_load(0);
 
+
 void SmartLock::pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t)
 {
     json j;
@@ -814,24 +815,37 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                     {
                         if(rfid == (*it).rfid)
                         {
-                            (*it).cnt++;
+                            if(ros::Time::now() - (*it).start_time >= ros::Duration(door_loading_unlock_exist_time))
+                            {
+                                (*it).cnt = 0;
+                            }
+                            else
+                            {
+                                (*it).cnt++;
+                            }
+                            (*it).start_time = ros::Time::now();
                             to_unlock_serials.clear();
-                            to_unlock_serials.push_back((*it).cnt % 3 + 1);
-                            ROS_WARN("start to unlock %d", (*it).cnt % 3 + 1);
+                            to_unlock_serials.push_back((*it).cnt % door_num + 1);
+                            ROS_WARN("start to unlock %d", (*it).cnt % door_num + 1);
+                            //(*it).cnt++;
                             flag = true;
                             break;
                         }
                     }
 
-                    if(flag == false)
+                    if(flag == false)// first time
                     {
                         loading_t load_tmp;
                         load_tmp.cnt = 0;
                         load_tmp.rfid = rfid;
                         load_tmp.password = password;
+                        load_tmp.start_time = ros::Time::now();
                         to_unlock_load.push_back(load_tmp);
-                    }
 
+                        to_unlock_serials.clear();
+                        to_unlock_serials.push_back(1);
+                        ROS_WARN("start to unlock 1");
+                    }
                 }
 
                 if(rfid == super_rfid)
@@ -879,22 +893,36 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                         {
                             if(rfid == (*it).password)
                             {
-                                (*it).cnt++;
+                                if(ros::Time::now() - (*it).start_time >= ros::Duration(door_loading_unlock_exist_time))
+                                {
+                                    (*it).cnt = 0;
+                                }
+                                else
+                                {
+                                    (*it).cnt++;
+                                }
+                                (*it).start_time = ros::Time::now();
                                 to_unlock_serials.clear();
-                                to_unlock_serials.push_back((*it).cnt % 3 + 1);
-                                ROS_WARN("start to unlock %d", (*it).cnt % 3 + 1);
+                                to_unlock_serials.push_back((*it).cnt % door_num + 1);
+                                ROS_WARN("start to unlock %d", (*it).cnt % door_num + 1);
+                                //(*it).cnt++;
                                 flag = true;
                                 break;
                             }
                         }
 
-                        if(flag == false)
+                        if(flag == false)// first time
                         {
                             loading_t load_tmp;
                             load_tmp.cnt = 0;
                             load_tmp.rfid = rfid;
                             load_tmp.password = pw;
+                            load_tmp.start_time = ros::Time::now();
                             to_unlock_load.push_back(load_tmp);
+
+                            to_unlock_serials.clear();
+                            to_unlock_serials.push_back(1);
+                            ROS_WARN("start to unlock 1");
                         }
 
                     }

@@ -16,6 +16,8 @@
 #include <sqlite3.h>
 
 bool is_need_update_rfid_pw = true;
+int door_num;
+int door_loading_unlock_exist_time;
 sqlite3 *db_;
 
 class SmartLock;
@@ -41,6 +43,28 @@ int main(int argc, char **argv)
     //system("shutdown now");
     //system("echo \'kaka\' | sudo -S sh -c \' shutdown now\'");
     ros::init(argc, argv, "smart_lock_node");
+
+
+    if(ros::param::has("/smart_lock/door_num"))
+    {
+        ros::param::get("/smart_lock/door_num",door_num);
+        ROS_INFO("get door num: %d",door_num);
+    }
+    else
+    {
+        ROS_ERROR("can not find param: /smart_lock/door_num");
+    }
+
+    if(ros::param::has("/smart_lock/door_loading_unlock_exist_time"))
+    {
+        ros::param::get("/smart_lock/door_loading_unlock_exist_time",door_loading_unlock_exist_time);
+        ROS_INFO("get door_loading_unlock_exist_time: %d",door_loading_unlock_exist_time);
+    }
+    else
+    {
+        ROS_ERROR("can not find param: /smart_lock/door_loading_unlock_exist_time");
+    }
+
     SmartLock *smart_lock = new SmartLock();
     ros::Rate loop_rate(20);
     uint32_t cnt = 0;

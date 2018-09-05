@@ -1,3 +1,6 @@
 
 smart_lock_node_version: smart_lock_v1.0.1
 
+
+/smart_lock/door_num: 5
+/smart_lock/door_loading_unlock_exist_time: 10
