@@ -95,11 +95,22 @@ typedef struct
 
 typedef struct
 {
+    std::string rfid;
+    std::string password;
+    uint32_t cnt;
+}loading_t;
+
+typedef struct
+{
     int uid;
     std::string rfid;
     std::string password;
     int worker_id;
     int door_id;
+
+#define ID_TYPE_LOADING         1
+#define ID_TYPE_UNLOADING       2
+    int id_type;
 }lock_pivas_t;
 
 
@@ -159,7 +170,7 @@ class SmartLock
 
         void start_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
 
-        std::vector<int> get_door_id_by_rfid_password(std::string data, uint8_t type, uint8_t *match_result);
+        std::vector<int> get_door_id_by_rfid_password(std::string data, uint8_t type, std::string *code, uint8_t *match_result, int *id_type);
 
 
         uint8_t map_key_value(uint16_t key);
@@ -180,11 +191,11 @@ extern int create_table(sqlite3 *db);
 extern int delete_all_db_data(sqlite3 *db, std::string table);
 extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
 extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
-extern int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id);
-extern int update_db_by_rfid(sqlite3 *db,std::string table, std::string rfid, std::string pw, int work_id, int door_id);
+extern int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id, int id_type);
+extern int update_db_by_rfid(sqlite3 *db,std::string table, std::string rfid, std::string pw, int work_id, int door_id, int id_type);
 extern int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
 extern std::vector<lock_pivas_t> get_table_pivas_to_ram(sqlite3 *db, std::string table);
-extern int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id);
+extern int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id, int id_type);
 extern int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
 extern  std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
 extern std::string get_table_super_pw_to_ram(sqlite3 *db, std::string table);

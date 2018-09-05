@@ -81,6 +81,7 @@ int main(int argc, char **argv)
         ROS_INFO("lock_match_db_vec.password = %s",     (*it).password.data());
         ROS_INFO("lock_match_db_vec.worker_id = %d",    (*it).worker_id);
         ROS_INFO("lock_match_db_vec.door_id = %d",      (*it).door_id);
+        ROS_INFO("lock_match_db_vec.id_type = %d",      (*it).id_type);
     }
 
     super_rfid = get_table_super_rfid_to_ram(db_, TABLE_SUPER_RFID_PW);

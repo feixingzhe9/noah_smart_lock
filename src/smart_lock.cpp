@@ -51,9 +51,9 @@ std::vector<std::string> input_qr_code;
 
 std::string lock_version;
 
-std::vector<pub_to_agent_t> pub_to_agent_vector;	//boost::mutex::scoped_lock()
+std::vector<pub_to_agent_t> pub_to_agent_vector(0);	//boost::mutex::scoped_lock()
 //std::vector<uint8_t> lock_serials_vector;	//boost::mutex::scoped_lock()
-std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
+std::vector<int> to_unlock_serials(0);     //boost::mutex::scoped_lock()
 
 std::string to_set_super_pw = "6666";
 std::string to_set_super_rfid =  "0000";
@@ -65,6 +65,8 @@ std::vector<lock_pivas_t> lock_match_db_vec;
 std::string super_rfid = "1050";
 std::string super_password = "1050";
 
+
+std::vector<loading_t> to_unlock_load(0);
 
 void SmartLock::pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t)
 {
@@ -297,18 +299,23 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
         }
         if(j["pub_name"] == "binding_credit_card_employees")
         {
+            std::string j_str = j.dump();
+            ROS_ERROR("%s",j_str.data());
+
             ROS_INFO("get binding_credit_card_employees . . .");
             if(delete_all_db_data(db_, TABLE_PIVAS) < 0)
             {
                 ROS_ERROR("delete_all_db_data ERROR ! !");
             }
+
             bool get_door_id = false;
+            int id_type = 0;
             for(int i = 1; i < 33; i++)
             {
-                if(j["data"].find(std::to_string(i)) != j["data"].end())
+                if(j["data_load"].find(std::to_string(i)) != j["data_load"].end())
                 {
                     get_door_id = true;
-                    std::vector<std::string> worker_id_vec = j["data"][std::to_string(i)];
+                    std::vector<std::string> worker_id_vec = j["data_load"][std::to_string(i)];
                     std::string worker_id;
                     ROS_INFO(" get door id : %d ",i);
                     for(std::vector<std::string>::iterator it = worker_id_vec.begin(); it != worker_id_vec.end(); it++)
@@ -321,7 +328,32 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
                         int int_worker_id = std::atoi(worker_id.c_str());
 
                         //update_db_by_door_id(db_, table_pivas, rfid, password,  worker_id, i);
-                        if(insert_into_db(db_, TABLE_PIVAS,rfid, password, int_worker_id, i) < 0)
+                        if(insert_into_db(db_, TABLE_PIVAS,rfid, password, int_worker_id, i, ID_TYPE_LOADING) < 0)
+                        {
+                            ROS_ERROR("%s: insert_into_db ERROR ! !",__func__);
+                        }
+                    }
+                    lock_match_db_vec.clear();
+                    lock_match_db_vec = get_table_pivas_to_ram(db_, TABLE_PIVAS);       //need to add mutex
+                }
+
+                if(j["data_unload"].find(std::to_string(i)) != j["data_unload"].end())
+                {
+                    get_door_id = true;
+                    std::vector<std::string> worker_id_vec = j["data_unload"][std::to_string(i)];
+                    std::string worker_id;
+                    ROS_INFO(" get door id : %d ",i);
+                    for(std::vector<std::string>::iterator it = worker_id_vec.begin(); it != worker_id_vec.end(); it++)
+                    {
+                        worker_id = (*it);
+                        ROS_INFO("worker id : %s",worker_id.c_str());
+
+                        std::string rfid = worker_id;
+                        std::string password = worker_id;
+                        int int_worker_id = std::atoi(worker_id.c_str());
+
+                        //update_db_by_door_id(db_, table_pivas, rfid, password,  worker_id, i);
+                        if(insert_into_db(db_, TABLE_PIVAS,rfid, password, int_worker_id, i, ID_TYPE_UNLOADING) < 0)
                         {
                             ROS_ERROR("%s: insert_into_db ERROR ! !",__func__);
                         }
@@ -659,7 +691,7 @@ std::string SmartLock::parse_qr_code(mrobot_driver_msgs::vci_can* msg)
     return qr_code;
 }
 
-std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8_t type, uint8_t *match_result)
+std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8_t type, std::string *code, uint8_t *match_result, int * id_type)
 {
     std::vector<int> to_unlock_tmp;
     to_unlock_tmp.clear();
@@ -671,8 +703,11 @@ std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8
             if((*it).rfid == data)
             {
                 ROS_INFO("get right RFID  ID");
+                *code = (*it).password;
+                *id_type = (*it).id_type;
                 to_unlock_tmp.push_back((*it).door_id);
                 *match_result = 0;
+                break;
             }
         }
         else if(type == TYPE_PASSWORD_CODE)
@@ -680,8 +715,11 @@ std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8
             if((*it).password == data)
             {
                 ROS_INFO("get right password");
+                *code = (*it).rfid;
+                *id_type = (*it).id_type;
                 to_unlock_tmp.push_back((*it).door_id);
                 *match_result = 0;
+                break;
             }
         }
     }
@@ -748,7 +786,9 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
             {
                 std::string rfid;
                 uint8_t status = 1;
+                int id_type = 0;
                 uint16_t rfid_int = 0;
+                std::vector<int> to_unlock_serials_tmp;
                 rfid.resize(RFID_LEN);
                 rfid.clear();
                 rfid_int = msg->Data[2];
@@ -759,8 +799,37 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 rfid = this->build_rfid(rfid_int);
                 ROS_INFO("receive RFID: %s",rfid.c_str());
                 input_rfid.push_back(rfid);
+                std::string password;
+                password.clear();
+                to_unlock_serials_tmp = get_door_id_by_rfid_password(rfid, TYPE_RFID_CODE, &password, &status, &id_type);
+                ROS_INFO("get password: %s  by rfid : %s",password.c_str(), rfid.c_str());
+                if(id_type == ID_TYPE_UNLOADING)
+                {
+                    to_unlock_serials = to_unlock_serials_tmp;
+                }
+                else if(id_type == ID_TYPE_LOADING)
+                {
+                    bool flag = false;
+                    for(std::vector<loading_t>::iterator it = to_unlock_load.begin(); it != to_unlock_load.end(); it++)
+                    {
+                        if(rfid == (*it).rfid)
+                        {
+                            (*it).cnt++;
+                            flag = true;
+                            break;
+                        }
+                    }
 
-                to_unlock_serials = get_door_id_by_rfid_password(rfid, TYPE_RFID_CODE, &status);
+                    if(flag == false)
+                    {
+                        loading_t load_tmp;
+                        load_tmp.cnt = 0;
+                        load_tmp.rfid = rfid;
+                        load_tmp.password = password;
+                        to_unlock_load.push_back(load_tmp);
+                    }
+
+                }
 
                 if(rfid == super_rfid)
                 {
@@ -780,6 +849,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                     ROS_INFO("get password upload");
                     std::string pw;
                     uint8_t status = 1;
+                    int id_type = 0;
                     pw.resize(PASSWORD_LEN);
                     pw.clear();
                     for(uint8_t i = 0; i < PASSWORD_LEN; i++)
@@ -788,8 +858,42 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                     }
                     ROS_INFO("receive pass word: %s",pw.data());
                     input_pw.push_back(pw);
+                    std::string rfid;
+                    rfid.clear();
 
-                    to_unlock_serials = get_door_id_by_rfid_password(pw, TYPE_PASSWORD_CODE, &status);
+                    std::vector<int> to_unlock_serials_tmp;
+                    to_unlock_serials = get_door_id_by_rfid_password(pw, TYPE_PASSWORD_CODE,&rfid,  &status, &id_type);
+                    ROS_INFO("id_type : %d",id_type);
+                    ROS_INFO("get rfid: %s  by password : %s",pw.c_str(), rfid.c_str());
+                    if(id_type == ID_TYPE_UNLOADING)
+                    {
+                        to_unlock_serials = to_unlock_serials_tmp;
+                    }
+                    else if(id_type == ID_TYPE_LOADING)
+                    {
+                        bool flag = false;
+                        for(std::vector<loading_t>::iterator it = to_unlock_load.begin(); it != to_unlock_load.end(); it++)
+                        {
+                            if(rfid == (*it).password)
+                            {
+                                (*it).cnt++;
+                                to_unlock_serials.clear();
+                                to_unlock_serials.push_back((*it).cnt % 3 + 1);
+                                flag = true;
+                                break;
+                            }
+                        }
+
+                        if(flag == false)
+                        {
+                            loading_t load_tmp;
+                            load_tmp.cnt = 0;
+                            load_tmp.rfid = rfid;
+                            load_tmp.password = pw;
+                            to_unlock_load.push_back(load_tmp);
+                        }
+
+                    }
 
                     if(pw == super_password)
                     {

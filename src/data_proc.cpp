@@ -61,7 +61,7 @@ int create_table(sqlite3 *db)
     int err = 0;
     char *err_msg = 0;
     int sql_exec_err = SQLITE_OK;
-    sql = "CREATE TABLE " + TABLE_PIVAS + "(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL);";
+    sql = "CREATE TABLE " + TABLE_PIVAS + "(UID INT PRIMARY KEY NOT NULL,   RFID TEXT NOT NULL,  PASSWORD TEXT NOT NULL,  WORKER_ID INT NOT NULL, DOOR_ID INT NOT NULL, ID_TYPE INT NOT NULL);";
     sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
     if(sql_exec_err != SQLITE_OK)
     {
@@ -104,6 +104,7 @@ int delete_all_db_data(sqlite3 *db, std::string table)
     }
     return 0;
 }
+
 static int sqlite_max_uid_callback(void *max_uid, int argc, char **argv, char **azColName)
 {
     ROS_WARN("%s",__func__);
@@ -143,7 +144,6 @@ static int get_max_uid(sqlite3 *db, std::string table)
 
     return max_uid;
 }
-
 
 static int sqlite_get_door_id_by_pw_callback(void *tmp, int argc, char **argv, char **azColName)
 {
@@ -233,7 +233,7 @@ std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str)
 }
 
 
-int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id)
+int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id, int id_type)
 {
     char *zErrMsg = 0;
     std::string sql;
@@ -247,7 +247,7 @@ int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string 
     }
     uid += 1;
     std::string uid_str = std::to_string(uid);
-    sql = "INSERT INTO " + table + " (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID)  VALUES(" + uid_str+ ", \'" + rfid + "\', \'" + pw + "\', " + std::to_string(work_id) + "," + std::to_string(door_id) + ");";
+    sql = "INSERT INTO " + table + " (UID, RFID, PASSWORD, WORKER_ID, DOOR_ID, ID_TYPE)  VALUES(" + uid_str+ "," + " \'" + rfid + "\'" + "," +  " \'" + pw + "\'" + ", " + std::to_string(work_id) + "," + std::to_string(door_id) + "," + std::to_string(id_type) + ");";
     ROS_INFO("%s: %s",__func__, sql.data());
     sql_exec_err = sqlite3_exec(db,sql.data(),NULL,0,&err_msg);
     if(sql_exec_err != SQLITE_OK)
@@ -271,7 +271,7 @@ static int sqlite_update_db_by_rfid_callback(void *tmp, int argc, char **argv, c
     *(int*)tmp = 1;
     return 0;
 }
-int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id)
+int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id, int id_type)
 {
     char *zErrMsg = 0;
     std::string sql;
@@ -342,7 +342,7 @@ int update_db_by_rfid(sqlite3 *db,  std::string table, std::string rfid, std::st
     else
     {
         ROS_INFO("update db by rfid: have no such rfid, will insert this rfid");
-        if(insert_into_db(db,table, rfid, pw, worker_id, door_id) < 0)
+        if(insert_into_db(db,table, rfid, pw, worker_id, door_id, id_type) < 0)
         {
             ROS_ERROR("%s: insert_into_db ERROR !",__func__);
         }
@@ -361,7 +361,7 @@ static int sqlite_update_db_by_door_id_callback(void *tmp, int argc, char **argv
     *(int*)tmp = 1;
     return 0;
 }
-int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id)
+int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id, int id_type)
 {
     char *zErrMsg = 0;
     int error = 0;
@@ -432,7 +432,7 @@ int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std:
     else
     {
         ROS_INFO("update db by door id: have no such door id, will insert this door id");
-        if(insert_into_db(db,table, rfid, pw, worker_id, door_id) < 0)
+        if(insert_into_db(db,table, rfid, pw, worker_id, door_id, id_type) < 0)
         {
             ROS_ERROR("%s: insert_into_db ERROR !",__func__);
         }
@@ -556,6 +556,7 @@ static int sqlite_get_table_pivas_to_ram_callback(void *tmp, int argc, char **ar
         pivas_vec_tmp.password = argv[2];
         pivas_vec_tmp.worker_id = std::atoi(argv[3]);
         pivas_vec_tmp.door_id = std::atoi(argv[4]);
+        pivas_vec_tmp.id_type = std::atoi(argv[5]);
         pivas_vec.push_back(pivas_vec_tmp);
     }
     return 0;
