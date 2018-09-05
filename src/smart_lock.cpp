@@ -815,6 +815,9 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                         if(rfid == (*it).rfid)
                         {
                             (*it).cnt++;
+                            to_unlock_serials.clear();
+                            to_unlock_serials.push_back((*it).cnt % 3 + 1);
+                            ROS_WARN("start to unlock %d", (*it).cnt % 3 + 1);
                             flag = true;
                             break;
                         }
@@ -879,6 +882,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                                 (*it).cnt++;
                                 to_unlock_serials.clear();
                                 to_unlock_serials.push_back((*it).cnt % 3 + 1);
+                                ROS_WARN("start to unlock %d", (*it).cnt % 3 + 1);
                                 flag = true;
                                 break;
                             }
