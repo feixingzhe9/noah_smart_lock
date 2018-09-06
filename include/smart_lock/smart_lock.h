@@ -157,7 +157,7 @@ class SmartLock
         std::string build_rfid(int rfid_int);
         std::string parse_qr_code(mrobot_driver_msgs::vci_can* msg);
 
-        void start_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
+        void prepare_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
 
         std::vector<int> get_door_id_by_rfid_password(std::string data, uint8_t type, uint8_t *match_result);
 

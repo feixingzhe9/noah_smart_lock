@@ -637,7 +637,7 @@ std::string SmartLock::parse_qr_code(mrobot_driver_msgs::vci_can* msg)
     uint8_t last1 = msg->Data[msg->DataLen - 1];
     uint8_t last2 = msg->Data[msg->DataLen - 2];
 
-    if( last2!= 0x0d)   // CRLF
+    if( last2 != 0x0d)   // CRLF
     {
         qr_code.push_back(last2);
     }
@@ -692,7 +692,7 @@ std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8
     return to_unlock_tmp;
 }
 
-void SmartLock::start_to_pub_to_agent( std::string code, uint8_t result, uint8_t type)
+void SmartLock::prepare_to_pub_to_agent( std::string code, uint8_t result, uint8_t type)
 {
     pub_to_agent_t pub_to_agent;
     pub_to_agent.code = code;
@@ -768,7 +768,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                     ROS_WARN("get right super RFID");
                 }
 
-                start_to_pub_to_agent(rfid, status, TYPE_RFID_CODE);
+                prepare_to_pub_to_agent(rfid, status, TYPE_RFID_CODE);
             }
 
             break;
@@ -797,7 +797,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                         ROS_WARN("get right super password");
                     }
 
-                    start_to_pub_to_agent(pw, status, TYPE_PASSWORD_CODE);
+                    prepare_to_pub_to_agent(pw, status, TYPE_PASSWORD_CODE);
                 }
             }
             break;
@@ -813,7 +813,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
                 //input_qr_code.push_back(qr_code);
 
-                start_to_pub_to_agent(qr_code, 0, TYPE_QR_CODE);
+                prepare_to_pub_to_agent(qr_code, 0, TYPE_QR_CODE);
             }
             break;
 
@@ -828,7 +828,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
                 //input_qr_code.push_back(qr_code);
 
-                start_to_pub_to_agent(qr_code, 0, TYPE_QR_CODE);
+                prepare_to_pub_to_agent(qr_code, 0, TYPE_QR_CODE);
             }
             break;
 
@@ -843,7 +843,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
                 //input_qr_code.push_back(qr_code);
 
-                start_to_pub_to_agent(qr_code, 0, TYPE_QR_CODE);
+                prepare_to_pub_to_agent(qr_code, 0, TYPE_QR_CODE);
             }
             break;
 
