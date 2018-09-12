@@ -790,6 +790,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 int id_type = 0;
                 uint16_t rfid_int = 0;
                 std::vector<int> to_unlock_serials_tmp;
+                to_unlock_serials_tmp.clear();
                 rfid.resize(RFID_LEN);
                 rfid.clear();
                 rfid_int = msg->Data[2];
@@ -879,7 +880,8 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                     rfid.clear();
 
                     std::vector<int> to_unlock_serials_tmp;
-                    to_unlock_serials = get_door_id_by_rfid_password(pw, TYPE_PASSWORD_CODE,&rfid,  &status, &id_type);
+                    to_unlock_serials_tmp.clear();
+                    to_unlock_serials_tmp = get_door_id_by_rfid_password(pw, TYPE_PASSWORD_CODE,&rfid,  &status, &id_type);
                     ROS_INFO("id_type : %d",id_type);
                     ROS_INFO("get rfid: %s  by password : %s",pw.c_str(), rfid.c_str());
                     if(id_type == ID_TYPE_UNLOADING)

@@ -3,4 +3,4 @@ smart_lock_node_version: MVP_smart_lock_v1.0.1
 
 
 /smart_lock/door_num: 3
-/smart_lock/door_loading_unlock_exist_time: 10
+/smart_lock/door_loading_unlock_exist_time: 300
