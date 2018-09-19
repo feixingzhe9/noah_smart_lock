@@ -400,7 +400,7 @@ int SmartLock::unlock(void)     // done
     }
     to_unlock_serials.clear();
 
-    mrobot_driver_msgs::vci_can can_msg;
+    mrobot_msgs::vci_can can_msg;
     CAN_ID_UNION id;
     memset(&id, 0x0, sizeof(CAN_ID_UNION));
     id.CanID_Struct.SourceID = CAN_SOURCE_ID_UNLOCK;
@@ -441,7 +441,7 @@ int SmartLock::set_super_pw(std::string super_pw)
     {
         ROS_WARN("start to set super pass word ...");
 
-        mrobot_driver_msgs::vci_can can_msg;
+        mrobot_msgs::vci_can can_msg;
         CAN_ID_UNION id;
         memset(&id, 0x0, sizeof(CAN_ID_UNION));
         id.CanID_Struct.SourceID = CAN_SOURCE_ID_SET_SUPER_PW;
@@ -474,7 +474,7 @@ int SmartLock::set_super_rfid(std::string super_rfid)
     {
         ROS_WARN("start to set super pass word ...");
 
-        mrobot_driver_msgs::vci_can can_msg;
+        mrobot_msgs::vci_can can_msg;
         CAN_ID_UNION id;
         memset(&id, 0x0, sizeof(CAN_ID_UNION));
         id.CanID_Struct.SourceID = CAN_SOURCE_ID_SET_SUPER_RFID;
@@ -504,7 +504,7 @@ int SmartLock::get_lock_version(void)
 {
     int error = -1;
 
-    mrobot_driver_msgs::vci_can can_msg;
+    mrobot_msgs::vci_can can_msg;
     CAN_ID_UNION id;
     memset(&id, 0x0, sizeof(CAN_ID_UNION));
     id.CanID_Struct.SourceID = CAN_SOURCE_ID_GET_VERSION;
@@ -624,7 +624,7 @@ std::string SmartLock::build_rfid(int rfid_int)
     return rfid;
 }
 
-std::string SmartLock::parse_qr_code(mrobot_driver_msgs::vci_can* msg)
+std::string SmartLock::parse_qr_code(mrobot_msgs::vci_can* msg)
 {
     std::string qr_code;
     qr_code.clear();
@@ -706,14 +706,14 @@ void SmartLock::prepare_to_pub_to_agent( std::string code, uint8_t result, uint8
 
 }
 
-void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg)
+void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg)
 {
-    mrobot_driver_msgs::vci_can can_msg;
-    mrobot_driver_msgs::vci_can long_msg;
+    mrobot_msgs::vci_can can_msg;
+    mrobot_msgs::vci_can long_msg;
     CAN_ID_UNION id;
 
     long_msg = this->long_frame.frame_construct(c_msg);
-    mrobot_driver_msgs::vci_can* msg = &long_msg;
+    mrobot_msgs::vci_can* msg = &long_msg;
     if( msg->ID == 0 )
     {
         return;
