@@ -433,7 +433,7 @@ int SmartLock::unlock(void)     // done
     }
     to_unlock_serials.clear();
 
-    mrobot_driver_msgs::vci_can can_msg;
+    mrobot_msgs::vci_can can_msg;
     CAN_ID_UNION id;
     memset(&id, 0x0, sizeof(CAN_ID_UNION));
     id.CanID_Struct.SourceID = CAN_SOURCE_ID_UNLOCK;
@@ -474,7 +474,7 @@ int SmartLock::set_super_pw(std::string super_pw)
     {
         ROS_WARN("start to set super pass word ...");
 
-        mrobot_driver_msgs::vci_can can_msg;
+        mrobot_msgs::vci_can can_msg;
         CAN_ID_UNION id;
         memset(&id, 0x0, sizeof(CAN_ID_UNION));
         id.CanID_Struct.SourceID = CAN_SOURCE_ID_SET_SUPER_PW;
@@ -507,7 +507,7 @@ int SmartLock::set_super_rfid(std::string super_rfid)
     {
         ROS_WARN("start to set super pass word ...");
 
-        mrobot_driver_msgs::vci_can can_msg;
+        mrobot_msgs::vci_can can_msg;
         CAN_ID_UNION id;
         memset(&id, 0x0, sizeof(CAN_ID_UNION));
         id.CanID_Struct.SourceID = CAN_SOURCE_ID_SET_SUPER_RFID;
@@ -537,7 +537,7 @@ int SmartLock::get_lock_version(void)
 {
     int error = -1;
 
-    mrobot_driver_msgs::vci_can can_msg;
+    mrobot_msgs::vci_can can_msg;
     CAN_ID_UNION id;
     memset(&id, 0x0, sizeof(CAN_ID_UNION));
     id.CanID_Struct.SourceID = CAN_SOURCE_ID_GET_VERSION;
@@ -657,7 +657,7 @@ std::string SmartLock::build_rfid(int rfid_int)
     return rfid;
 }
 
-std::string SmartLock::parse_qr_code(mrobot_driver_msgs::vci_can* msg)
+std::string SmartLock::parse_qr_code(mrobot_msgs::vci_can* msg)
 {
     std::string qr_code;
     qr_code.clear();
@@ -708,7 +708,7 @@ std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8
                 *id_type = (*it).id_type;
                 to_unlock_tmp.push_back((*it).door_id);
                 *match_result = 0;
-                break;
+                //break;
             }
         }
         else if(type == TYPE_PASSWORD_CODE)
@@ -720,7 +720,7 @@ std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8
                 *id_type = (*it).id_type;
                 to_unlock_tmp.push_back((*it).door_id);
                 *match_result = 0;
-                break;
+                //break;
             }
         }
     }
@@ -745,14 +745,14 @@ void SmartLock::prepare_to_pub_to_agent( std::string code, uint8_t result, uint8
 
 }
 
-void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg)
+void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg)
 {
-    mrobot_driver_msgs::vci_can can_msg;
-    mrobot_driver_msgs::vci_can long_msg;
+    mrobot_msgs::vci_can can_msg;
+    mrobot_msgs::vci_can long_msg;
     CAN_ID_UNION id;
 
     long_msg = this->long_frame.frame_construct(c_msg);
-    mrobot_driver_msgs::vci_can* msg = &long_msg;
+    mrobot_msgs::vci_can* msg = &long_msg;
     if( msg->ID == 0 )
     {
         return;
@@ -808,6 +808,12 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                 if(id_type == ID_TYPE_UNLOADING)
                 {
                     to_unlock_serials = to_unlock_serials_tmp;
+#if 1
+                    for(std::vector<int>::iterator it = to_unlock_serials.begin(); it != to_unlock_serials.end(); it++ )
+                    {
+                        ROS_WARN("get door id %d by rfid %s", *it, rfid.c_str());
+                    }
+#endif
                 }
                 else if(id_type == ID_TYPE_LOADING)
                 {
@@ -887,6 +893,12 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::Co
                     if(id_type == ID_TYPE_UNLOADING)
                     {
                         to_unlock_serials = to_unlock_serials_tmp;
+#if 1
+                        for(std::vector<int>::iterator it = to_unlock_serials.begin(); it != to_unlock_serials.end(); it++ )
+                        {
+                            ROS_WARN("get door id %d by password %s", *it, rfid.c_str());
+                        }
+#endif
                     }
                     else if(id_type == ID_TYPE_LOADING)
                     {

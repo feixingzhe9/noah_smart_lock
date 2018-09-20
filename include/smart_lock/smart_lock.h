@@ -5,7 +5,7 @@
 #include "json.hpp"
 #include <sqlite3.h>
 //#include <time.h>
-#include <mrobot_driver_msgs/vci_can.h>
+#include <mrobot_msgs/vci_can.h>
 #include <roscan/can_long_frame.h>
 
 
@@ -133,7 +133,7 @@ class SmartLock
 
             sub_from_can_node = n.subscribe("can_to_smart_lock", 1000, &SmartLock::rcv_from_can_node_callback, this);
 
-            pub_to_can_node = n.advertise<mrobot_driver_msgs::vci_can>("smart_lock_to_can", 1000);
+            pub_to_can_node = n.advertise<mrobot_msgs::vci_can>("smart_lock_to_can", 1000);
 
             mcu_version.clear();
             //lock_match_db.clear();
@@ -164,10 +164,10 @@ class SmartLock
         void pub_json_msg_to_app(const nlohmann::json j_msg);
         void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
 
-        void rcv_from_can_node_callback(const mrobot_driver_msgs::vci_can::ConstPtr &c_msg);
+        void rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg);
 
         std::string build_rfid(int rfid_int);
-        std::string parse_qr_code(mrobot_driver_msgs::vci_can* msg);
+        std::string parse_qr_code(mrobot_msgs::vci_can* msg);
 
         void prepare_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
 
