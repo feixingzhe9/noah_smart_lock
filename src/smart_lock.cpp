@@ -896,7 +896,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
 #if 1
                         for(std::vector<int>::iterator it = to_unlock_serials.begin(); it != to_unlock_serials.end(); it++ )
                         {
-                            ROS_WARN("get door id %d by password %s", *it, rfid.c_str());
+                            ROS_WARN("get door id %d by password %s", *it, pw.c_str());
                         }
 #endif
                     }
