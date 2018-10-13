@@ -118,6 +118,7 @@ class SmartLock
         {
             pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
             sub_from_agent = n.subscribe("agent_pub", 1000, &SmartLock::sub_from_agent_callback, this);
+            sub_fp_id = n.subscribe("fp_id", 10, &SmartLock::sub_fp_id_callback, this);
 
             sub_from_can_node = n.subscribe("can_to_smart_lock", 1000, &SmartLock::rcv_from_can_node_callback, this);
 
@@ -141,6 +142,7 @@ class SmartLock
         ros::Subscriber sub_from_agent;
         ros::Subscriber sub_from_can_node;
         ros::Publisher pub_to_can_node;
+        ros::Subscriber sub_fp_id;
 
         can_long_frame  long_frame;
 
@@ -153,6 +155,7 @@ class SmartLock
         void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
 
         void rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg);
+        void sub_fp_id_callback(const std_msgs::String::ConstPtr &msg);
 
         std::string build_rfid(int rfid_int);
         std::string parse_qr_code(mrobot_msgs::vci_can* msg);

@@ -387,6 +387,41 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 }
 
 
+void SmartLock::sub_fp_id_callback(const std_msgs::String::ConstPtr &msg)
+{
+#define FP_ID_DATA_ERR_TOO_LONG         (-2)
+#define FP_ID_DATA_ERR_NOT_INTEGER      (-1)
+    int len = msg->data.length();
+    int data_err_flag = 0;
+    uint8_t match_result = 0;
+    if(len > 4)
+    {
+        data_err_flag = FP_ID_DATA_ERR_TOO_LONG;
+        goto err;
+    }
+
+    for(int i = 0; i < len; i++)
+    {
+        if((msg->data[i] < '0') || (msg->data[i] > '9'))
+        {
+            data_err_flag = FP_ID_DATA_ERR_NOT_INTEGER;
+            goto err;
+        }
+    }
+
+    to_unlock_serials = get_door_id_by_rfid_password(msg->data.c_str(), TYPE_RFID_CODE, &match_result);
+
+err:
+    if(data_err_flag < 0)
+    {
+        ROS_ERROR("%s: receive data error ! ", __func__);
+        if(data_err_flag == FP_ID_DATA_ERR_NOT_INTEGER)
+        {
+            ROS_ERROR("%s: receive data error ! ", __func__);
+        }
+    }
+}
+
 int SmartLock::unlock(void)     // done
 {
     int error = 0;
