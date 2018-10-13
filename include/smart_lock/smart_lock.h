@@ -6,6 +6,7 @@
 #include <sqlite3.h>
 //#include <time.h>
 #include <mrobot_msgs/vci_can.h>
+#include <mrobot_msgs/fingerprint.h>
 #include <roscan/can_long_frame.h>
 
 
@@ -155,7 +156,7 @@ class SmartLock
         void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
 
         void rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg);
-        void sub_fp_id_callback(const std_msgs::String::ConstPtr &msg);
+        void sub_fp_id_callback(const mrobot_msgs::fingerprint::ConstPtr &msg);
 
         std::string build_rfid(int rfid_int);
         std::string parse_qr_code(mrobot_msgs::vci_can* msg);
