@@ -394,7 +394,7 @@ void SmartLock::sub_fp_id_callback(const mrobot_msgs::fingerprint::ConstPtr &msg
 #if 1
     ROS_INFO("%s", __func__);
     int result = msg->result;
-    if(result >= 0)
+    if(result == 0)
     {
         ROS_INFO("fingerprint match OK");
         std::string rfid = msg->rfid.data();
@@ -417,6 +417,10 @@ void SmartLock::sub_fp_id_callback(const mrobot_msgs::fingerprint::ConstPtr &msg
         }
 
         to_unlock_serials = get_door_id_by_rfid_password(rfid.c_str(), TYPE_RFID_CODE, &match_result);
+        if(match_result == 1)
+        {
+            this->beeper_ctrl(1, 1, 1, 0);
+        }
 
 err:
         if(data_err_flag < 0)
@@ -432,10 +436,16 @@ err:
             }
         }
     }
-    else
+    if(result < 0)
     {
         ROS_ERROR("get error msg from fingerprint node: fingerprint feature match failed !");
-        //beep_ctrl();
+        this->beeper_ctrl(3, 1, 1, 0);
+    }
+
+    if(result > 0)
+    {
+        //ROS_ERROR("get error msg from fingerprint node: fingerprint feature match failed !");
+        this->beeper_ctrl(1, 1, 1, 0);
     }
 #endif
 }
@@ -552,6 +562,38 @@ int SmartLock::set_super_rfid(std::string super_rfid)
 
     return error;
 }
+
+
+int SmartLock::beeper_ctrl(uint8_t times, uint8_t duration, uint8_t interval_time, uint8_t frequency)
+{
+    int error = -1;
+    ROS_WARN("start to ctrl beeper ");
+
+    mrobot_msgs::vci_can can_msg;
+    CAN_ID_UNION id;
+    memset(&id, 0x0, sizeof(CAN_ID_UNION));
+    id.CanID_Struct.SourceID = CAN_SOURCE_ID_BEEPER_TIMES_CTRL;
+    id.CanID_Struct.SrcMACID = 0;
+    id.CanID_Struct.DestMACID = SMART_LOCK_CAN_SRC_MAC_ID;
+    id.CanID_Struct.FUNC_ID = 0x02;
+    id.CanID_Struct.ACK = 0;
+    id.CanID_Struct.res = 0;
+
+    can_msg.ID = id.CANx_ID;
+    can_msg.DataLen = 5;
+    can_msg.Data.resize(5);
+
+    can_msg.Data[0] = 0x00;
+    can_msg.Data[1]  = times;
+    can_msg.Data[2]  = duration;
+    can_msg.Data[3]  = interval_time;
+    can_msg.Data[4]  = frequency;
+
+    this->pub_to_can_node.publish(can_msg);
+
+    return error;
+}
+
 
 int SmartLock::get_lock_version(void)
 {
@@ -716,6 +758,8 @@ std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8
 {
     std::vector<int> to_unlock_tmp;
     to_unlock_tmp.clear();
+
+    *match_result = 1;
 
     for(std::vector<lock_pivas_t>::iterator it = lock_match_db_vec.begin(); it != lock_match_db_vec.end(); it++)
     {

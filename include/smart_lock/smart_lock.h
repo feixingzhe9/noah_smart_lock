@@ -42,6 +42,8 @@ using json = nlohmann::json;
 #define CAN_SOURCE_ID_KEY_TEST_UPLOAD       0xa0
 #define CAN_SOURCE_ID_LOCK_STATUS_UPLOAD    0xa1
 
+#define CAN_SOURCE_ID_BEEPER_TIMES_CTRL     0xb0
+
 #define CAN_SOURCE_ID_CAN_LOAD_TEST         0xff
 
 
@@ -135,6 +137,7 @@ class SmartLock
         int get_lock_version(void);
         int set_super_pw(std::string super_pw);
         int set_super_rfid(std::string super_rfid);
+        int beeper_ctrl(uint8_t times, uint8_t duration, uint8_t interval_time, uint8_t freqency);
         void pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t);
 
     private:
