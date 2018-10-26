@@ -1,3 +1,5 @@
 
 smart_lock_node_version: smart_lock_v1.0.2
 
+/smart_lock/lock_num: 3
+

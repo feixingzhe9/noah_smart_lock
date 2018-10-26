@@ -789,6 +789,17 @@ std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8
     return to_unlock_tmp;
 }
 
+void SmartLock::pub_locks_status(uint8_t *status, uint8_t lock_num)
+{
+    std_msgs::UInt8MultiArray locks_status;
+    locks_status.data.clear();
+    for(uint8_t i = 0; i < lock_num; i++)
+    {
+        locks_status.data.push_back(status[i]);
+    }
+    this->locks_status_pub.publish(locks_status);
+}
+
 void SmartLock::prepare_to_pub_to_agent( std::string code, uint8_t result, uint8_t type)
 {
     pub_to_agent_t pub_to_agent;
@@ -866,6 +877,11 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 }
 
                 prepare_to_pub_to_agent(rfid, status, TYPE_RFID_CODE);
+
+                if(status == 1)
+                {
+                    this->beeper_ctrl(3, 1, 1, 0);
+                }
             }
 
             break;
@@ -895,6 +911,11 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                     }
 
                     prepare_to_pub_to_agent(pw, status, TYPE_PASSWORD_CODE);
+
+                    if(status == 1)
+                    {
+                        this->beeper_ctrl(3, 1, 1, 0);
+                    }
                 }
             }
             break;
@@ -1045,19 +1066,31 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
             {
                 static uint8_t lock_status_new[10] = {0};
                 static uint8_t lock_status_last[10] = {0};
-                uint8_t lock_num = data_len;
-                if(lock_num > 0)
+                uint8_t num = data_len;
+                if((num > 0))
                 {
-                    for(uint8_t i = 0; i < lock_num; i++)
+                    if(num >= this->lock_num)
                     {
-                        lock_status_new[i] = msg->Data[i];
-                        if(lock_status_new[i] != lock_status_last[i])
+                        for(uint8_t i = 0; i < num; i++)
                         {
-                            ROS_INFO("lock %d status change to %d", i+1, lock_status_new[i]);
-                        }
+                            lock_status_new[i] = msg->Data[i];
+                            if(lock_status_new[i] != lock_status_last[i])
+                            {
+                                ROS_INFO("lock %d status change to %d", i+1, lock_status_new[i]);
+                            }
 
-                        lock_status_last[i] = lock_status_new[i];
+                            lock_status_last[i] = lock_status_new[i];
+                        }
+                        this->pub_locks_status(lock_status_new, this->lock_num);
                     }
+                    else
+                    {
+                        ROS_ERROR("lock number is incorrect ! !");
+                    }
+                }
+                else
+                {
+                    ROS_ERROR("CAN_SOURCE_ID_LOCK_STATUS_UPLOAD: CAN data length is incorrect ! !");
                 }
                 break;
             }

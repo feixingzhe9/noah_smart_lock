@@ -41,7 +41,28 @@ int main(int argc, char **argv)
     //system("shutdown now");
     //system("echo \'kaka\' | sudo -S sh -c \' shutdown now\'");
     ros::init(argc, argv, "smart_lock_node");
-    SmartLock *smart_lock = new SmartLock();
+#if 1
+    int lock_num = 1;
+    if(ros::param::has("/smart_lock/lock_num"))
+    {
+        ros::param::get("/smart_lock/lock_num", lock_num);
+        if(lock_num == 0)
+        {
+            ROS_ERROR("get door num: %d, but door number CAN NOT be 0 ! using default value: 1", lock_num);
+            lock_num = 1;
+        }
+        else
+        {
+            ROS_INFO("get door num: %d", lock_num);
+        }
+    }
+    else
+    {
+        ROS_ERROR("can not find param: /smart_lock/door_num !  door number using default value: 1");
+        lock_num = 1;//default value
+    }
+#endif
+    SmartLock *smart_lock = new SmartLock((uint8_t)lock_num);
     ros::Rate loop_rate(20);
     uint32_t cnt = 0;
     smart_lock->param_init();
