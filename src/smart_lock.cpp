@@ -1067,7 +1067,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 static uint8_t lock_status_new[10] = {0};
                 static uint8_t lock_status_last[10] = {0};
                 uint8_t num = data_len;
-                if((num > 0))
+                if(num > 0)
                 {
                     if(num >= this->lock_num)
                     {
