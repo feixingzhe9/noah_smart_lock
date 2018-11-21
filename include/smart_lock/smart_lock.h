@@ -132,11 +132,16 @@ class SmartLock
             sub_from_agent = n.subscribe("agent_pub", 1000, &SmartLock::sub_from_agent_callback, this);
 
             sub_from_can_node = n.subscribe("can_to_smart_lock", 1000, &SmartLock::rcv_from_can_node_callback, this);
+            lock_permission_restore_sub = n.subscribe("restore_lock_permission_request", 10, &SmartLock::lock_permission_restore_callback, this);
+
+            update_unload_permission_sub = n.subscribe("update_unload_permission_request", 10, &SmartLock::update_unload_permission_callback, this);
+
 
             pub_to_can_node = n.advertise<mrobot_msgs::vci_can>("smart_lock_to_can", 1000);
 
             mcu_version.clear();
             //lock_match_db.clear();
+            lock_permission_restore_flag = 0;
 
         }
         int param_init(void);
@@ -152,6 +157,12 @@ class SmartLock
         ros::Publisher pub_to_agent;
         ros::Subscriber sub_from_agent;
         ros::Subscriber sub_from_can_node;
+        ros::Subscriber lock_permission_restore_sub;
+        ros::Publisher lock_permission_restore_ack_pub;
+
+        ros::Subscriber update_unload_permission_sub;
+        ros::Publisher update_unload_permission_ack_pub;
+
         ros::Publisher pub_to_can_node;
 
         can_long_frame  long_frame;
@@ -165,18 +176,21 @@ class SmartLock
         void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
 
         void rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg);
+        void lock_permission_restore_callback(const std_msgs::UInt8MultiArray &msg);
+        void update_unload_permission_callback(const std_msgs::String::ConstPtr &msg);
 
         std::string build_rfid(int rfid_int);
         std::string parse_qr_code(mrobot_msgs::vci_can* msg);
 
         void prepare_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
 
-        std::vector<int> get_door_id_by_rfid_password(std::string data, uint8_t type, std::string *code, uint8_t *match_result, int *id_type);
+        std::vector<int> get_door_id_by_rfid_password(std::string data, uint8_t type, std::string *code, uint8_t *match_result, int id_type);
 
 
         uint8_t map_key_value(uint16_t key);
 
         lock_pivas_t lock_match_tmp;
+        uint8_t lock_permission_restore_flag;
 
 };
 
