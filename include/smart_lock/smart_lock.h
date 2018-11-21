@@ -141,7 +141,7 @@ class SmartLock
 
             mcu_version.clear();
             //lock_match_db.clear();
-            lock_permission_restore_flag = 0;
+            lock_permission_restore_flag = 1;
 
         }
         int param_init(void);
