@@ -127,7 +127,7 @@ extern smart_lock_t    *sys_smart_lock;
 class SmartLock
 {
     public:
-        SmartLock()
+        SmartLock(uint8_t num)
         {
             pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
             sub_from_agent = n.subscribe("agent_pub", 1000, &SmartLock::sub_from_agent_callback, this);
@@ -142,10 +142,13 @@ class SmartLock
 
 
             pub_to_can_node = n.advertise<mrobot_msgs::vci_can>("smart_lock_to_can", 1000);
+            locks_status_pub = n.advertise<std_msgs::UInt8MultiArray>("smartlock/locks_state", 10);
+
 
             mcu_version.clear();
             //lock_match_db.clear();
             lock_permission_restore_flag = 1;
+            door_num = num;
 
         }
         int param_init(void);
@@ -171,12 +174,16 @@ class SmartLock
 
         ros::Publisher pub_to_can_node;
 
+        ros::Publisher locks_status_pub;
+
         can_long_frame  long_frame;
 
         std::string mcu_version;
         const std::string mcu_version_param = "mcu_smart_lock_version";
 
         json j;
+        uint8_t door_num;
+
 
         void pub_json_msg_to_app(const nlohmann::json j_msg);
         void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
@@ -190,6 +197,7 @@ class SmartLock
 
         void prepare_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
 
+        void pub_locks_status(uint8_t *status, uint8_t lock_num);
         std::vector<int> get_door_id_by_rfid_password(std::string data, uint8_t type, std::string *code, uint8_t *match_result, int id_type);
 
 
