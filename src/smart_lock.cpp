@@ -577,6 +577,35 @@ int SmartLock::unlock(void)     // done
     return error;
 }
 
+int SmartLock::beeper_ctrl(uint8_t times, uint8_t duration, uint8_t interval_time, uint8_t frequency)
+{
+    int error = -1;
+    ROS_WARN("start to ctrl beeper ");
+
+    mrobot_msgs::vci_can can_msg;
+    CAN_ID_UNION id;
+    memset(&id, 0x0, sizeof(CAN_ID_UNION));
+    id.CanID_Struct.SourceID = CAN_SOURCE_ID_BEEPER_TIMES_CTRL;
+    id.CanID_Struct.SrcMACID = 0;
+    id.CanID_Struct.DestMACID = SMART_LOCK_CAN_SRC_MAC_ID;
+    id.CanID_Struct.FUNC_ID = 0x02;
+    id.CanID_Struct.ACK = 0;
+    id.CanID_Struct.res = 0;
+
+    can_msg.ID = id.CANx_ID;
+    can_msg.DataLen = 5;
+    can_msg.Data.resize(5);
+
+    can_msg.Data[0] = 0x00;
+    can_msg.Data[1]  = times;
+    can_msg.Data[2]  = duration;
+    can_msg.Data[3]  = interval_time;
+    can_msg.Data[4]  = frequency;
+
+    this->pub_to_can_node.publish(can_msg);
+
+    return error;
+}
 
 int SmartLock::set_super_pw(std::string super_pw)
 {
@@ -1031,6 +1060,12 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 }
 
                 prepare_to_pub_to_agent(rfid, status, TYPE_RFID_CODE);
+
+                if(status == 1)
+                {
+                    this->beeper_ctrl(3, 1, 1, 0);
+                }
+
             }
 
             break;
@@ -1122,6 +1157,11 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                     }
 
                     prepare_to_pub_to_agent(pw, status, TYPE_PASSWORD_CODE);
+                    if(status == 1)
+                    {
+                        this->beeper_ctrl(3, 1, 1, 0);
+                    }
+
                 }
             }
             break;
