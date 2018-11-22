@@ -480,8 +480,6 @@ void SmartLock::update_unload_permission_callback(const std_msgs::String::ConstP
             }
             if(get_door_id == true)
             {
-                time_t t;
-                time(&t);
                 json j_ack;
                 j_ack.clear();
                 j_ack =
@@ -829,7 +827,6 @@ std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8
                     *code = (*it).password;
                     to_unlock_tmp.push_back((*it).door_id);
                     *match_result = 0;
-                    //break;
                 }
             }
             else if(type == TYPE_PASSWORD_CODE)
@@ -840,7 +837,6 @@ std::vector<int> SmartLock::get_door_id_by_rfid_password(std::string data, uint8
                     *code = (*it).rfid;
                     to_unlock_tmp.push_back((*it).door_id);
                     *match_result = 0;
-                    //break;
                 }
             }
         }
@@ -895,6 +891,7 @@ void SmartLock::prepare_to_pub_to_agent( std::string code, uint8_t result, uint8
 
 void SmartLock::lock_permission_restore_callback(const std_msgs::UInt8MultiArray &msg)
 {
+    ROS_INFO("%s", __func__);
     std_msgs::UInt8MultiArray ack;
     ack.data.clear();
     if(msg.data.size() == 1)
