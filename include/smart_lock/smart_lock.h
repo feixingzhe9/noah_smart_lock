@@ -132,9 +132,12 @@ class SmartLock
             sub_from_agent = n.subscribe("agent_pub", 1000, &SmartLock::sub_from_agent_callback, this);
 
             sub_from_can_node = n.subscribe("can_to_smart_lock", 1000, &SmartLock::rcv_from_can_node_callback, this);
+
             lock_permission_restore_sub = n.subscribe("restore_lock_permission_request", 10, &SmartLock::lock_permission_restore_callback, this);
+            lock_permission_restore_ack_pub = n.advertise<std_msgs::UInt8MultiArray>("restore_lock_permission_response",10);
 
             update_unload_permission_sub = n.subscribe("update_unload_permission_request", 10, &SmartLock::update_unload_permission_callback, this);
+            update_unload_permission_ack_pub = n.advertise<std_msgs::String>("update_unload_permission_response",10);
 
 
             pub_to_can_node = n.advertise<mrobot_msgs::vci_can>("smart_lock_to_can", 1000);
@@ -157,6 +160,7 @@ class SmartLock
         ros::Publisher pub_to_agent;
         ros::Subscriber sub_from_agent;
         ros::Subscriber sub_from_can_node;
+
         ros::Subscriber lock_permission_restore_sub;
         ros::Publisher lock_permission_restore_ack_pub;
 

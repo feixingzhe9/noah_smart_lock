@@ -422,6 +422,7 @@ void SmartLock::sub_from_agent_callback(const std_msgs::String::ConstPtr &msg)
 
 void SmartLock::update_unload_permission_callback(const std_msgs::String::ConstPtr &msg)
 {
+    ROS_INFO("%s", __func__);
     auto j = json::parse(msg->data.c_str());
     std::string uuid_str;
 //    if(j.find("uuid") != j.end())
@@ -430,8 +431,10 @@ void SmartLock::update_unload_permission_callback(const std_msgs::String::ConstP
 //    }
     if(j.find("pub_name") != j.end())
     {
+        ROS_INFO("%s: find \'pub_name\'", __func__);
         if(j["pub_name"] == "type_unloading")
         {
+            ROS_INFO("%s:  pub_name == type_unloading", __func__);
             ROS_INFO("get type_unloading . . .");
 //            if(delete_all_db_data(db_, TABLE_PIVAS) < 0)
 //            {
@@ -483,13 +486,12 @@ void SmartLock::update_unload_permission_callback(const std_msgs::String::ConstP
                 j_ack.clear();
                 j_ack =
                 {
-                    {"uuid",uuid_str.c_str()},
                     {"sub_name","type_unloading"},
 
                     {
                         "data",
                         {
-                            {"result", 1},
+                            {"result", 0},
                         }
                     }
 
@@ -500,7 +502,7 @@ void SmartLock::update_unload_permission_callback(const std_msgs::String::ConstP
                 ss.clear();
                 ss << j_ack;
                 pub_json_msg.data = ss.str();
-                pub_to_agent.publish(pub_json_msg);
+                update_unload_permission_ack_pub.publish(pub_json_msg);
 
                 lock_permission_restore_flag = 0;
             }
@@ -510,13 +512,12 @@ void SmartLock::update_unload_permission_callback(const std_msgs::String::ConstP
                 j_ack.clear();
                 j_ack =     // operation failed
                 {
-                    {"uuid",uuid_str.c_str()},
                     {"sub_name","type_unloading"},
 
                     {
                         "data",
                         {
-                            {"result", 0},
+                            {"result", -1},
                         }
                     }
 
@@ -902,10 +903,14 @@ void SmartLock::lock_permission_restore_callback(const std_msgs::UInt8MultiArray
         {
             ROS_INFO("get lock permission restore");
             lock_permission_restore_flag = 1;
-            ack.data.push_back(1);
-            lock_permission_restore_ack_pub.publish(ack);
+            ack.data.push_back(0);
+            lock_permission_restore_ack_pub.publish(ack);   //ack right
+            return ;
         }
     }
+    ROS_ERROR("%s: parameter error !", __func__);
+    ack.data.push_back(1);  //ack error: parameter error
+    lock_permission_restore_ack_pub.publish(ack);
 }
 
 void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg)
