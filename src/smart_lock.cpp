@@ -1008,12 +1008,51 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 std::string password;
                 password.clear();
                 to_unlock_serials_tmp = get_door_id_by_rfid_password(rfid, TYPE_RFID_CODE, &password, &status, ID_TYPE_UNLOADING);
+
                 if(to_unlock_serials_tmp.empty())
                 {
                     to_unlock_serials_tmp = get_door_id_by_rfid_password(rfid, TYPE_RFID_CODE, &password, &status, ID_TYPE_LOADING);
+                    if(!to_unlock_serials_tmp.empty())
+                    {
+                        bool flag = false;
+                        for(std::vector<loading_t>::iterator it = to_unlock_load.begin(); it != to_unlock_load.end(); it++)
+                        {
+                            if(rfid == (*it).rfid)
+                            {
+                                if(ros::Time::now() - (*it).start_time >= ros::Duration(door_loading_unlock_exist_time))
+                                {
+                                    (*it).cnt = 0;
+                                }
+                                else
+                                {
+                                    (*it).cnt++;
+                                }
+                                (*it).start_time = ros::Time::now();
+                                to_unlock_serials.clear();
+                                to_unlock_serials.push_back((*it).cnt % door_num + 1);
+                                ROS_WARN("start to unlock %d", (*it).cnt % door_num + 1);
+                                //(*it).cnt++;
+                                flag = true;
+                                break;
+                            }
+                        }
+
+                        if(flag == false)// first time
+                        {
+                            loading_t load_tmp;
+                            load_tmp.cnt = 0;
+                            load_tmp.rfid = rfid;
+                            load_tmp.password = password;
+                            load_tmp.start_time = ros::Time::now();
+                            to_unlock_load.push_back(load_tmp);
+
+                            to_unlock_serials.clear();
+                            to_unlock_serials.push_back(1);
+                            ROS_WARN("start to unlock 1");
+                        }
+                    }
                 }
-                ROS_INFO("get password: %s  by rfid : %s",password.c_str(), rfid.c_str());
-                if(id_type == ID_TYPE_UNLOADING)
+                else
                 {
                     to_unlock_serials = to_unlock_serials_tmp;
 #if 1
@@ -1023,46 +1062,6 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                     }
 #endif
                 }
-                else if(id_type == ID_TYPE_LOADING)
-                {
-                    bool flag = false;
-                    for(std::vector<loading_t>::iterator it = to_unlock_load.begin(); it != to_unlock_load.end(); it++)
-                    {
-                        if(rfid == (*it).rfid)
-                        {
-                            if(ros::Time::now() - (*it).start_time >= ros::Duration(door_loading_unlock_exist_time))
-                            {
-                                (*it).cnt = 0;
-                            }
-                            else
-                            {
-                                (*it).cnt++;
-                            }
-                            (*it).start_time = ros::Time::now();
-                            to_unlock_serials.clear();
-                            to_unlock_serials.push_back((*it).cnt % door_num + 1);
-                            ROS_WARN("start to unlock %d", (*it).cnt % door_num + 1);
-                            //(*it).cnt++;
-                            flag = true;
-                            break;
-                        }
-                    }
-
-                    if(flag == false)// first time
-                    {
-                        loading_t load_tmp;
-                        load_tmp.cnt = 0;
-                        load_tmp.rfid = rfid;
-                        load_tmp.password = password;
-                        load_tmp.start_time = ros::Time::now();
-                        to_unlock_load.push_back(load_tmp);
-
-                        to_unlock_serials.clear();
-                        to_unlock_serials.push_back(1);
-                        ROS_WARN("start to unlock 1");
-                    }
-                }
-
                 if(rfid == super_rfid)
                 {
                     status = 0;
@@ -1111,7 +1110,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                             bool flag = false;
                             for(std::vector<loading_t>::iterator it = to_unlock_load.begin(); it != to_unlock_load.end(); it++)
                             {
-                                if(rfid == (*it).password)
+                                if(pw == (*it).password)
                                 {
                                     if(ros::Time::now() - (*it).start_time >= ros::Duration(door_loading_unlock_exist_time))
                                     {
