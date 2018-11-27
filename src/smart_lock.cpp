@@ -11,34 +11,20 @@
 #include "sstream"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include <algorithm>
 #include <smart_lock.h>
 
 
-boost::mutex mtx_agent;
-//boost::mutex mtx_smart_lock;
-
-smart_lock_t    sys_smart_lock_ram;
-smart_lock_t    *sys_smart_lock = &sys_smart_lock_ram;
-
-std::vector<std::string> input_qr_code;
-
 std::string lock_version;
 
-//std::vector<uint8_t> lock_serials_vector;	//boost::mutex::scoped_lock()
 std::vector<int> to_unlock_serials(0);     //boost::mutex::scoped_lock()
 
 std::string super_rfid = "1050";
 std::string super_password = "1050";
 
-
 int SmartLock::param_init(void)
 {
-    sys_smart_lock->lock_serials.clear();
-    sys_smart_lock->lock_serials.push_back(1);
     return 0;
 }
-
 
 int SmartLock::unlock(void)     // done
 {
@@ -368,18 +354,30 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
     uint8_t source_id = id.CanID_Struct.SourceID;
     uint8_t data_len = msg->DataLen;
 
-    ROS_INFO("%s", __func__);
     ROS_INFO("source id: 0x%x",source_id);
     ROS_INFO("data length: %d",data_len);
 
     switch(source_id)
     {
+        case CAN_SOURCE_ID_KEY_TEST_UPLOAD:
+            {
+                ROS_INFO("get key test value upload. data len is %d ", data_len);
+
+                if( 2 == data_len)
+                {
+                    uint16_t key = *(uint16_t*)&msg->Data[0];
+                    ROS_INFO("get key test value:  0x%x", key);
+                    char key_value = map_key_value(key);
+                    ROS_WARN("get key: %c",key_value);
+                }
+                break;
+            }
+
         case CAN_SOURCE_ID_UNLOCK:
             ROS_INFO("get unlock ack from mcu");
             break;
 
         case CAN_SOURCE_ID_RFID_UPLOAD:
-            ROS_INFO("get rfid upload info from mcu");
             if(data_len == RFID_LEN)
             {
                 std::string rfid;
@@ -396,18 +394,14 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
 
                 ROS_INFO("rfid int data :%d",rfid_int);
                 rfid = this->build_rfid(rfid_int);
-                ROS_INFO("receive RFID: %s",rfid.c_str());
-                std::string password;
-                password.clear();
+                ROS_WARN("receive RFID: %s",rfid.c_str());
             }
-
             break;
 
         case CAN_SOURCE_ID_PW_UPLOAD:
             {
                 if(data_len == PASSWORD_LEN)
                 {
-                    ROS_INFO("get password upload");
                     std::string pw;
                     uint8_t status = 1;
                     int id_type = 0;
@@ -417,12 +411,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                     {
                         pw.push_back(msg->Data[i]);
                     }
-                    ROS_INFO("receive pass word: %s",pw.data());
-                    std::string rfid;
-                    rfid.clear();
-
-                    std::vector<int> to_unlock_serials_tmp;
-                    to_unlock_serials_tmp.clear();
+                    ROS_WARN("receive pass word: %s",pw.data());
                 }
             }
             break;
@@ -436,8 +425,6 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 qr_code = parse_qr_code(msg);
 
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
-                //input_qr_code.push_back(qr_code);
-
             }
             break;
 
@@ -450,7 +437,6 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 qr_code = parse_qr_code(msg);
 
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
-                //input_qr_code.push_back(qr_code);
             }
             break;
 
@@ -463,7 +449,6 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 qr_code = parse_qr_code(msg);
 
                 ROS_WARN("receive QR code: %s",qr_code.c_str());
-                //input_qr_code.push_back(qr_code);
             }
             break;
 
@@ -508,21 +493,6 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 }
                 n.setParam(mcu_version_param, this->mcu_version.c_str());
                 ROS_INFO("get lock mcu version : %s",this->mcu_version.c_str());
-                break;
-            }
-
-        case CAN_SOURCE_ID_KEY_TEST_UPLOAD:
-            {
-                ROS_INFO("get key test value upload. ");
-                ROS_INFO("get key test value upload. data len is %d ", data_len);
-
-                if( 2 == data_len)
-                {
-                    uint16_t key = *(uint16_t*)&msg->Data[0];
-                    ROS_INFO("get key test value:  0x%x", key);
-                    char key_value = map_key_value(key);
-                    ROS_INFO("get key: %c",key_value);
-                }
                 break;
             }
 

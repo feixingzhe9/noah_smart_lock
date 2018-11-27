@@ -1,9 +1,9 @@
 #ifndef _SMART_LOCK_SMART_LOCK_H
 #define _SMART_LOCK_SMART_LOCK_H
+
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "json.hpp"
-#include <sqlite3.h>
 #include <mrobot_msgs/vci_can.h>
 #include <roscan/can_long_frame.h>
 
@@ -39,8 +39,6 @@ using json = nlohmann::json;
 #define CAN_SOURCE_ID_LOCK_STATUS_UPLOAD    0xa1
 #define CAN_SOURCE_ID_BEEPER_TIMES_CTRL     0xb0
 
-#define CAN_SOURCE_ID_CAN_LOAD_TEST         0xff
-
 
 #define KEY_VALUE_B        (1<<0)
 #define KEY_VALUE_9        (1<<1)
@@ -59,24 +57,6 @@ using json = nlohmann::json;
 #define TYPE_RFID_CODE              2
 #define TYPE_PASSWORD_CODE          3
 
-
-#define COM_ERR_REPEAT_TIME             3
-
-typedef struct
-{
-    uint8_t lock_id;
-    bool status;
-}lock_serials_stauts_t;
-
-
-typedef struct
-{
-    std::vector<uint8_t> lock_serials;
-    std::vector<lock_serials_stauts_t> lock_serials_status;
-}smart_lock_t;
-
-
-extern smart_lock_t    *sys_smart_lock;
 class SmartLock
 {
     public:
@@ -88,10 +68,9 @@ class SmartLock
             locks_status_pub = n.advertise<std_msgs::UInt8MultiArray>("smartlock/locks_state", 10);
 
             mcu_version.clear();
-            //lock_match_db.clear();
             door_num = num;
-
         }
+
         int param_init(void);
 
         int unlock(void);
@@ -133,9 +112,5 @@ extern  std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
 extern std::string super_rfid;
 extern std::string super_password;
 
-extern int door_num;
-extern int door_loading_unlock_exist_time;
-
 #endif
-
 
