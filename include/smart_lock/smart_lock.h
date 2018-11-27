@@ -38,6 +38,7 @@ using json = nlohmann::json;
 #define CAN_SOURCE_ID_KEY_TEST_UPLOAD       0xa0
 #define CAN_SOURCE_ID_LOCK_STATUS_UPLOAD    0xa1
 #define CAN_SOURCE_ID_BEEPER_TIMES_CTRL     0xb0
+#define CAN_SOURCE_ID_GET_DOORS_STATE       0xb1
 
 
 #define KEY_VALUE_B        (1<<0)
@@ -78,6 +79,7 @@ class SmartLock
         int set_super_pw(std::string super_pw);
         int set_super_rfid(std::string super_rfid);
         int beeper_ctrl(uint8_t times, uint8_t duration, uint8_t interval_time, uint8_t freqency);
+        int get_doors_state(void);
 
     private:
         ros::NodeHandle n;

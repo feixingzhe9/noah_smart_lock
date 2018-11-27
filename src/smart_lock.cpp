@@ -168,6 +168,30 @@ int SmartLock::set_super_rfid(std::string super_rfid)
     return error;
 }
 
+int SmartLock::get_doors_state(void)
+{
+    int error = -1;
+
+    mrobot_msgs::vci_can can_msg;
+    CAN_ID_UNION id;
+    memset(&id, 0x0, sizeof(CAN_ID_UNION));
+    id.CanID_Struct.SourceID = CAN_SOURCE_ID_GET_DOORS_STATE;
+    id.CanID_Struct.SrcMACID = 0;
+    id.CanID_Struct.DestMACID = SMART_LOCK_CAN_SRC_MAC_ID;
+    id.CanID_Struct.FUNC_ID = 0x02;
+    id.CanID_Struct.ACK = 0;
+    id.CanID_Struct.res = 0;
+
+    can_msg.ID = id.CANx_ID;
+    can_msg.DataLen = 1;
+    can_msg.Data.resize(1);
+    can_msg.Data[0] = 0x00;
+
+    this->pub_to_can_node.publish(can_msg);
+
+    return error;
+}
+
 int SmartLock::get_lock_version(void)
 {
     int error = -1;
@@ -510,7 +534,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                             lock_status_new[i] = msg->Data[i];
                             if(lock_status_new[i] != lock_status_last[i])
                             {
-                                ROS_INFO("lock %d status change to %d", i+1, lock_status_new[i]);
+                                ROS_WARN("lock %d status change to %d", i+1, lock_status_new[i]);
                             }
 
                             lock_status_last[i] = lock_status_new[i];
@@ -525,6 +549,16 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 else
                 {
                     ROS_ERROR("CAN_SOURCE_ID_LOCK_STATUS_UPLOAD: CAN data length is incorrect ! !");
+                }
+                break;
+            }
+
+        case CAN_SOURCE_ID_GET_DOORS_STATE:
+            {
+                ROS_INFO("get doors state");
+                for(uint8_t i = 0; i < data_len; i++)
+                {
+                    ROS_WARN("door %d state is %d", i + 1, msg->Data[i]);
                 }
                 break;
             }

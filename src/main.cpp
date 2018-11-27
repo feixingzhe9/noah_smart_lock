@@ -60,6 +60,7 @@ int main(int argc, char **argv)
         {
             usleep(100*1000);
             smart_lock->get_lock_version();
+            smart_lock->get_doors_state();
             init_flag = true;
         }
         if(is_need_update_rfid_pw == true)
