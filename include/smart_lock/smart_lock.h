@@ -4,13 +4,10 @@
 #include "std_msgs/String.h"
 #include "json.hpp"
 #include <sqlite3.h>
-//#include <time.h>
 #include <mrobot_msgs/vci_can.h>
 #include <roscan/can_long_frame.h>
 
-
 using json = nlohmann::json;
-
 
 #define SMART_LOCK_CAN_SRC_MAC_ID   0xd6
 
@@ -62,14 +59,6 @@ using json = nlohmann::json;
 #define TYPE_RFID_CODE              2
 #define TYPE_PASSWORD_CODE          3
 
-enum
-{
-    DATA_DIRECTION_LOCK_TO_X86 = 1,
-    DATA_DIRECTION_LOCK_ACK = 2,
-    DATA_DIRECTION_X86_TO_LOCK = 3,
-    DATA_DIRECTION_X86_ACK = 4
-
-}DATA_DIRECTION_E;
 
 #define COM_ERR_REPEAT_TIME             3
 
@@ -78,42 +67,6 @@ typedef struct
     uint8_t lock_id;
     bool status;
 }lock_serials_stauts_t;
-
-typedef struct
-{
-    uint8_t lock_id;
-    std::string rfid;
-    std::string pw;
-}lock_match_t;
-
-typedef struct
-{
-    uint8_t type;
-    std::string code;
-    uint8_t result;
-}pub_to_agent_t;
-
-
-typedef struct
-{
-    std::string rfid;
-    std::string password;
-    uint32_t cnt;
-    ros::Time start_time;
-}loading_t;
-
-typedef struct
-{
-    int uid;
-    std::string rfid;
-    std::string password;
-    int worker_id;
-    int door_id;
-
-#define ID_TYPE_LOADING         1
-#define ID_TYPE_UNLOADING       2
-    int id_type;
-}lock_pivas_t;
 
 
 typedef struct
@@ -129,25 +82,13 @@ class SmartLock
     public:
         SmartLock(uint8_t num)
         {
-            pub_to_agent = n.advertise<std_msgs::String>("agent_sub",1000);
-            sub_from_agent = n.subscribe("agent_pub", 1000, &SmartLock::sub_from_agent_callback, this);
-
             sub_from_can_node = n.subscribe("can_to_smart_lock", 1000, &SmartLock::rcv_from_can_node_callback, this);
-
-            lock_permission_restore_sub = n.subscribe("restore_lock_permission_request", 10, &SmartLock::lock_permission_restore_callback, this);
-            lock_permission_restore_ack_pub = n.advertise<std_msgs::UInt8MultiArray>("restore_lock_permission_response",10);
-
-            update_unload_permission_sub = n.subscribe("update_unload_permission_request", 10, &SmartLock::update_unload_permission_callback, this);
-            update_unload_permission_ack_pub = n.advertise<std_msgs::String>("update_unload_permission_response",10);
-
 
             pub_to_can_node = n.advertise<mrobot_msgs::vci_can>("smart_lock_to_can", 1000);
             locks_status_pub = n.advertise<std_msgs::UInt8MultiArray>("smartlock/locks_state", 10);
 
-
             mcu_version.clear();
             //lock_match_db.clear();
-            lock_permission_restore_flag = 1;
             door_num = num;
 
         }
@@ -158,19 +99,10 @@ class SmartLock
         int set_super_pw(std::string super_pw);
         int set_super_rfid(std::string super_rfid);
         int beeper_ctrl(uint8_t times, uint8_t duration, uint8_t interval_time, uint8_t freqency);
-        void pub_info_to_agent(long long uuid, uint8_t type, std::string data, uint8_t status, time_t t);
 
     private:
         ros::NodeHandle n;
-        ros::Publisher pub_to_agent;
-        ros::Subscriber sub_from_agent;
         ros::Subscriber sub_from_can_node;
-
-        ros::Subscriber lock_permission_restore_sub;
-        ros::Publisher lock_permission_restore_ack_pub;
-
-        ros::Subscriber update_unload_permission_sub;
-        ros::Publisher update_unload_permission_ack_pub;
 
         ros::Publisher pub_to_can_node;
 
@@ -184,54 +116,20 @@ class SmartLock
         json j;
         uint8_t door_num;
 
-
-        void pub_json_msg_to_app(const nlohmann::json j_msg);
-        void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
-
         void rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg);
-        void lock_permission_restore_callback(const std_msgs::UInt8MultiArray &msg);
-        void update_unload_permission_callback(const std_msgs::String::ConstPtr &msg);
 
         std::string build_rfid(int rfid_int);
         std::string parse_qr_code(mrobot_msgs::vci_can* msg);
 
-        void prepare_to_pub_to_agent( std::string code, uint8_t result, uint8_t type);
-
         void pub_locks_status(uint8_t *status, uint8_t lock_num);
-        std::vector<int> get_door_id_by_rfid_password(std::string data, uint8_t type, std::string *code, uint8_t *match_result, int id_type);
-
 
         uint8_t map_key_value(uint16_t key);
-
-        lock_pivas_t lock_match_tmp;
-        uint8_t lock_permission_restore_flag;
-
 };
 
-void *agent_protocol_process(void* arg);
-
-extern const std::string TABLE_PIVAS;
-extern const std::string TABLE_SUPER_RFID_PW;
-extern sqlite3 *db_;
 extern bool is_need_update_rfid_pw;
 
-extern sqlite3*  open_db(void);
-extern int create_table(sqlite3 *db);
-extern int delete_all_db_data(sqlite3 *db, std::string table);
-extern std::vector<int> get_door_id_by_pw(sqlite3 *db, std::string input_str);
-extern std::vector<int> get_door_id_by_rfid(sqlite3 *db, std::string input_str);
-extern int insert_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw, int work_id, int door_id, int id_type);
-extern int update_db_by_rfid(sqlite3 *db,std::string table, std::string rfid, std::string pw, int work_id, int door_id, int id_type);
-extern int insert_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
-extern std::vector<lock_pivas_t> get_table_pivas_to_ram(sqlite3 *db, std::string table);
-extern int update_db_by_door_id(sqlite3 *db,  std::string table, std::string rfid, std::string pw, int worker_id, int door_id, int id_type);
-extern int update_super_into_db(sqlite3 *db, std::string table,std::string rfid, std::string pw);
 extern  std::vector<int> to_unlock_serials;     //boost::mutex::scoped_lock()
-extern std::string get_table_super_pw_to_ram(sqlite3 *db, std::string table);
-extern std::string get_table_super_rfid_to_ram(sqlite3 *db, std::string table);
 
-
-extern std::vector<lock_pivas_t> lock_match_db_vec;
 extern std::string super_rfid;
 extern std::string super_password;
 

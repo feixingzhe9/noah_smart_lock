@@ -27,7 +27,6 @@ include_directories(
 add_executable(smart_lock_node
     src/main.cpp
     src/smart_lock.cpp
-    src/data_proc.cpp
 )
 
 add_dependencies(smart_lock_node
