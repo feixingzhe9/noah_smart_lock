@@ -292,35 +292,39 @@ bool SmartLock::service_update_super_admin(mrobot_srvs::JString::Request  &super
 
     if(j.find("super_pwd") != j.end())
     {
-        std_msgs::String super_pwd;
-        super_pwd.data = j["super_pwd"];
-        int len = super_pwd.data.size();
+        std::string password;
+        password = j["super_pwd"];
+        int len = password.size();
         for(int i = 0; i < len; i++)
         {
-            if((super_pwd.data[i] < '0') || (super_pwd.data[i] > '9'))
+            if((password[i] < '0') || (password[i] > '9'))
             {
                 ROS_ERROR("super password is not pure number !");
                 return false;
             }
         }
-        ROS_WARN("%s : get super password %s", __func__, super_pwd.data.c_str());
+        super_password = password;
+        is_need_update_rfid_pw = true;
+        ROS_WARN("%s : get super password %s", __func__, password.c_str());
     }
 
 
     if(j.find("super_rfid") != j.end())
     {
-        std_msgs::String super_rfid;
-        super_rfid.data = j["super_rfid"];
-        int len = super_rfid.data.size();
+        std::string rfid;
+        rfid = j["super_rfid"];
+        int len = rfid.size();
         for(int i = 0; i < len; i++)
         {
-            if((super_rfid.data[i] < '0') || (super_rfid.data[i] > '9'))
+            if((rfid[i] < '0') || (rfid[i] > '9'))
             {
                 ROS_ERROR("super password is not pure number !");
                 return false;
             }
         }
-        ROS_WARN("%s : get super rfid %s", __func__, super_rfid.data.c_str());
+        super_rfid = rfid;
+        is_need_update_rfid_pw = true;
+        ROS_WARN("%s : get super rfid %s", __func__, rfid.c_str());
     }
 
     return true;
