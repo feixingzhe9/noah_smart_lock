@@ -18,8 +18,8 @@ std::string lock_version;
 
 std::vector<int> to_unlock_serials(0);     //boost::mutex::scoped_lock()
 
-std::string super_rfid = "1050";
-std::string super_password = "1050";
+std::string super_rfid = "1055";
+std::string super_password = "1055";
 
 int SmartLock::param_init(void)
 {
@@ -216,6 +216,73 @@ int SmartLock::get_lock_version(void)
     return error;
 }
 
+void SmartLock::report_rfid(std_msgs::String rfid)
+{
+    json j;
+    j.clear();
+    j =
+    {
+        {"rfid", rfid.data.c_str()},
+    };
+    std_msgs::String pub_json_msg;
+    std::stringstream ss;
+    ss.clear();
+    ss << j;
+    pub_json_msg.data.clear();
+    pub_json_msg.data = ss.str();
+    report_rfid_pub.publish(pub_json_msg);
+
+}
+
+
+
+void SmartLock::report_password(std_msgs::String password)
+{
+    json j;
+    j.clear();
+    j =
+    {
+        {"pwd", password.data.c_str()},
+    };
+
+    std_msgs::String pub_json_msg;
+    std::stringstream ss;
+    ss.clear();
+    ss << j;
+    pub_json_msg.data.clear();
+    pub_json_msg.data = ss.str();
+    report_pwd_pub.publish(pub_json_msg);
+}
+
+void SmartLock::report_qr_code(uint8_t index, std_msgs::String qr_code)
+{
+    json j;
+    uint32_t lock_index = 0;
+    if(index < 32)
+    {
+        lock_index = (1 << index);
+    }
+    else
+    {
+        return ;
+    }
+
+    j.clear();
+    j =
+    {
+        {"lock_index", lock_index},
+        {"content", qr_code.data.c_str()},
+    };
+    std_msgs::String pub_json_msg;
+    std::stringstream ss;
+    ss.clear();
+    ss << j;
+    pub_json_msg.data.clear();
+    pub_json_msg.data = ss.str();
+    report_qr_code_pub.publish(pub_json_msg);
+
+}
+
 uint8_t SmartLock::map_key_value(uint16_t key_value)
 {
     uint8_t key_true_value = 0;
@@ -404,21 +471,22 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
         case CAN_SOURCE_ID_RFID_UPLOAD:
             if(data_len == RFID_LEN)
             {
-                std::string rfid;
+                std_msgs::String rfid;
                 uint8_t status = 1;
                 int id_type = 0;
                 uint16_t rfid_int = 0;
                 std::vector<int> to_unlock_serials_tmp;
                 to_unlock_serials_tmp.clear();
-                rfid.resize(RFID_LEN);
-                rfid.clear();
+                rfid.data.resize(RFID_LEN);
+                rfid.data.clear();
                 rfid_int = msg->Data[2];
                 rfid_int = rfid_int << 8;
                 rfid_int += msg->Data[3];
 
                 ROS_INFO("rfid int data :%d",rfid_int);
-                rfid = this->build_rfid(rfid_int);
-                ROS_WARN("receive RFID: %s",rfid.c_str());
+                rfid.data = this->build_rfid(rfid_int);
+                ROS_WARN("receive RFID: %s",rfid.data.c_str());
+                this->report_rfid(rfid);
             }
             break;
 
@@ -426,16 +494,17 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
             {
                 if(data_len == PASSWORD_LEN)
                 {
-                    std::string pw;
+                    std_msgs::String pwd;
                     uint8_t status = 1;
                     int id_type = 0;
-                    pw.resize(PASSWORD_LEN);
-                    pw.clear();
+                    pwd.data.resize(PASSWORD_LEN);
+                    pwd.data.clear();
                     for(uint8_t i = 0; i < PASSWORD_LEN; i++)
                     {
-                        pw.push_back(msg->Data[i]);
+                        pwd.data.push_back(msg->Data[i]);
                     }
-                    ROS_WARN("receive pass word: %s",pw.data());
+                    ROS_WARN("receive pass word: %s",pwd.data.c_str());
+                    this->report_password(pwd);
                 }
             }
             break;
@@ -443,36 +512,39 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
         case CAN_SOURCE_ID_QR_CODE_UPLOAD_1:
             {
                 ROS_INFO("get upload QR 1  code info.");
-                std::string qr_code;
-                qr_code.clear();
+                std_msgs::String qr_code;
+                qr_code.data.clear();
 
-                qr_code = parse_qr_code(msg);
+                qr_code.data = parse_qr_code(msg);
 
-                ROS_WARN("receive QR code: %s",qr_code.c_str());
+                ROS_WARN("receive QR code: %s",qr_code.data.c_str());
+                this->report_qr_code(0, qr_code);
             }
             break;
 
         case CAN_SOURCE_ID_QR_CODE_UPLOAD_2:
             {
                 ROS_INFO("get upload QR 2  code info.");
-                std::string qr_code;
-                qr_code.clear();
+                std_msgs::String qr_code;
+                qr_code.data.clear();
 
-                qr_code = parse_qr_code(msg);
+                qr_code.data = parse_qr_code(msg);
 
-                ROS_WARN("receive QR code: %s",qr_code.c_str());
+                ROS_WARN("receive QR code: %s",qr_code.data.c_str());
+                this->report_qr_code(1, qr_code);
             }
             break;
 
         case CAN_SOURCE_ID_QR_CODE_UPLOAD_3:
             {
                 ROS_INFO("get upload QR 3  code info.");
-                std::string qr_code;
-                qr_code.clear();
+                std_msgs::String qr_code;
+                qr_code.data.clear();
 
-                qr_code = parse_qr_code(msg);
+                qr_code.data = parse_qr_code(msg);
 
-                ROS_WARN("receive QR code: %s",qr_code.c_str());
+                ROS_WARN("receive QR code: %s",qr_code.data.c_str());
+                this->report_qr_code(2, qr_code);
             }
             break;
 

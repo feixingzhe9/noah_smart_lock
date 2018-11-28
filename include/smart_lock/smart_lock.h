@@ -67,6 +67,11 @@ class SmartLock
 
             pub_to_can_node = n.advertise<mrobot_msgs::vci_can>("smart_lock_to_can", 1000);
             locks_status_pub = n.advertise<std_msgs::UInt8MultiArray>("smartlock/locks_state", 10);
+            report_pwd_pub = n.advertise<std_msgs::String>("smartlock/report_password", 10);
+            report_rfid_pub = n.advertise<std_msgs::String>("smartlock/report_rfid", 10);
+            report_qr_code_pub = n.advertise<std_msgs::String>("smartlock/report_qr_code", 10);
+
+
 
             mcu_version.clear();
             door_num = num;
@@ -81,6 +86,12 @@ class SmartLock
         int beeper_ctrl(uint8_t times, uint8_t duration, uint8_t interval_time, uint8_t freqency);
         int get_doors_state(void);
 
+        void report_rfid(std_msgs::String rfid);
+        void report_password(std_msgs::String password);
+        void report_qr_code(uint8_t index, std_msgs::String qr_code);
+
+
+
     private:
         ros::NodeHandle n;
         ros::Subscriber sub_from_can_node;
@@ -88,6 +99,9 @@ class SmartLock
         ros::Publisher pub_to_can_node;
 
         ros::Publisher locks_status_pub;
+        ros::Publisher report_pwd_pub;
+        ros::Publisher report_rfid_pub;
+        ros::Publisher report_qr_code_pub;
 
         can_long_frame  long_frame;
 
