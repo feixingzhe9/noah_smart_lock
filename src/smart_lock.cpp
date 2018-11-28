@@ -306,6 +306,7 @@ bool SmartLock::service_update_super_admin(mrobot_srvs::JString::Request  &super
         super_password = password;
         is_need_update_rfid_pw = true;
         ROS_WARN("%s : get super password %s", __func__, password.c_str());
+        sem_init(&super_admin_sem, 0, 0);
     }
 
 
@@ -325,8 +326,18 @@ bool SmartLock::service_update_super_admin(mrobot_srvs::JString::Request  &super
         super_rfid = rfid;
         is_need_update_rfid_pw = true;
         ROS_WARN("%s : get super rfid %s", __func__, rfid.c_str());
+        sem_init(&super_admin_sem, 0, 0);
     }
+//    sem_wait(&super_admin_sem);
+//    ROS_WARN("wait 1");
+//    sem_wait(&super_admin_sem);
+//    ROS_WARN("wait 2");
 
+    return true;
+}
+
+bool SmartLock::service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobot_srvs::JString::Response &status)
+{
     return true;
 }
 
@@ -607,6 +618,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                         super_password_ack.push_back(msg->Data[i]);
                     }
                     ROS_INFO("get ack super password: %s", super_password_ack.c_str());
+                    //sem_post(&super_admin_sem);
                 }
                 break;
             }
@@ -623,6 +635,7 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                         super_rfid_ack.push_back(msg->Data[i]);
                     }
                     ROS_INFO("get ack super rfid: %s", super_rfid_ack.c_str());
+                    //sem_post(&super_admin_sem);
                 }
                 break;
             }

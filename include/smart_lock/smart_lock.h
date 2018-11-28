@@ -7,6 +7,7 @@
 #include <mrobot_msgs/vci_can.h>
 #include <mrobot_srvs/JString.h>
 #include <roscan/can_long_frame.h>
+#include <semaphore.h>
 
 using json = nlohmann::json;
 
@@ -73,6 +74,8 @@ class SmartLock
             report_qr_code_pub = n.advertise<std_msgs::String>("smartlock/report_qr_code", 10);
 
             update_super_admin = n.advertiseService("smartlock/update_super_admin", &SmartLock::service_update_super_admin, this);
+            unlock_service = n.advertiseService("smartlock/unlock", &SmartLock::service_unlock, this);
+            sem_init(&super_admin_sem, 0, 2);
 
             mcu_version.clear();
             door_num = num;
@@ -105,6 +108,7 @@ class SmartLock
         ros::Publisher report_qr_code_pub;
 
         ros::ServiceServer update_super_admin;
+        ros::ServiceServer unlock_service;
 
         can_long_frame  long_frame;
 
@@ -114,9 +118,12 @@ class SmartLock
         json j;
         uint8_t door_num;
 
+        sem_t super_admin_sem;
+
         void rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg);
 
         bool service_update_super_admin(mrobot_srvs::JString::Request  &ctrl, mrobot_srvs::JString::Response &status);
+        bool service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobot_srvs::JString::Response &status);
 
 
         std::string build_rfid(int rfid_int);
