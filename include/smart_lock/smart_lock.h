@@ -5,6 +5,7 @@
 #include "std_msgs/String.h"
 #include "json.hpp"
 #include <mrobot_msgs/vci_can.h>
+#include <mrobot_srvs/JString.h>
 #include <roscan/can_long_frame.h>
 
 using json = nlohmann::json;
@@ -71,7 +72,7 @@ class SmartLock
             report_rfid_pub = n.advertise<std_msgs::String>("smartlock/report_rfid", 10);
             report_qr_code_pub = n.advertise<std_msgs::String>("smartlock/report_qr_code", 10);
 
-
+            update_super_admin = n.advertiseService("smartlock/update_super_admin", &SmartLock::service_update_super_admin, this);
 
             mcu_version.clear();
             door_num = num;
@@ -103,6 +104,8 @@ class SmartLock
         ros::Publisher report_rfid_pub;
         ros::Publisher report_qr_code_pub;
 
+        ros::ServiceServer update_super_admin;
+
         can_long_frame  long_frame;
 
         std::string mcu_version;
@@ -112,6 +115,9 @@ class SmartLock
         uint8_t door_num;
 
         void rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg);
+
+        bool service_update_super_admin(mrobot_srvs::JString::Request  &ctrl, mrobot_srvs::JString::Response &status);
+
 
         std::string build_rfid(int rfid_int);
         std::string parse_qr_code(mrobot_msgs::vci_can* msg);

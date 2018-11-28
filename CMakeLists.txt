@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   roslib
   mrobot_msgs
+  mrobot_srvs
   roscan
 )
 
