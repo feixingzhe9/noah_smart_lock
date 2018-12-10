@@ -338,6 +338,31 @@ bool SmartLock::service_update_super_admin(mrobot_srvs::JString::Request  &super
 
 bool SmartLock::service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobot_srvs::JString::Response &status)
 {
+    auto j = json::parse(lock_index.request.c_str());
+    std::string j_str = j.dump();
+    ROS_WARN("%s",j_str.data());
+
+    if(j.find("lock_index") != j.end())
+    {
+        uint32_t lock_index = j["lock_index"];
+            to_unlock_serials.clear();
+        for(uint8_t i = 0; i < 32; i++)
+        {
+            if(lock_index & (1 << i))
+            {
+                ROS_INFO("%s: require unlock num: %d", __func__, i + 1);
+                to_unlock_serials.push_back(i + 1);
+            }
+        }
+        this->unlock();
+    }
+
+
+//    sem_wait(&super_admin_sem);
+//    ROS_WARN("wait 1");
+//    sem_wait(&super_admin_sem);
+//    ROS_WARN("wait 2");
+
     return true;
 }
 
