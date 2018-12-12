@@ -306,7 +306,7 @@ bool SmartLock::service_update_super_admin(mrobot_srvs::JString::Request  &super
         super_password = password;
         is_need_update_rfid_pw = true;
         ROS_WARN("%s : get super password %s", __func__, password.c_str());
-        sem_init(&super_admin_sem, 0, 0);
+//        sem_init(&super_admin_sem, 0, 0);
     }
 
 
@@ -326,13 +326,13 @@ bool SmartLock::service_update_super_admin(mrobot_srvs::JString::Request  &super
         super_rfid = rfid;
         is_need_update_rfid_pw = true;
         ROS_WARN("%s : get super rfid %s", __func__, rfid.c_str());
-        sem_init(&super_admin_sem, 0, 0);
+//        sem_init(&super_admin_sem, 0, 0);
     }
 //    sem_wait(&super_admin_sem);
 //    ROS_WARN("wait 1");
 //    sem_wait(&super_admin_sem);
 //    ROS_WARN("wait 2");
-
+    status.success = true;
     return true;
 }
 
