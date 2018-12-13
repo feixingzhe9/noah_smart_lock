@@ -7,6 +7,7 @@
 //#include <time.h>
 #include <mrobot_msgs/vci_can.h>
 #include <roscan/can_long_frame.h>
+#include <mrobot_srvs/JString.h>
 
 
 using json = nlohmann::json;
@@ -143,6 +144,7 @@ class SmartLock
 
             pub_to_can_node = n.advertise<mrobot_msgs::vci_can>("smart_lock_to_can", 1000);
             locks_status_pub = n.advertise<std_msgs::UInt8MultiArray>("smartlock/locks_state", 10);
+            unlock_service = n.advertiseService("smartlock/unlock", &SmartLock::service_unlock, this);
 
 
             mcu_version.clear();
@@ -175,6 +177,7 @@ class SmartLock
         ros::Publisher pub_to_can_node;
 
         ros::Publisher locks_status_pub;
+        ros::ServiceServer unlock_service;
 
         can_long_frame  long_frame;
 
@@ -184,6 +187,7 @@ class SmartLock
         json j;
         uint8_t door_num;
 
+        bool service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobot_srvs::JString::Response &status);
 
         void pub_json_msg_to_app(const nlohmann::json j_msg);
         void sub_from_agent_callback(const std_msgs::String::ConstPtr &msg);
