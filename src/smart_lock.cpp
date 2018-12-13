@@ -362,7 +362,7 @@ bool SmartLock::service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobo
 //    ROS_WARN("wait 1");
 //    sem_wait(&super_admin_sem);
 //    ROS_WARN("wait 2");
-
+    status.success = true;
     return true;
 }
 
