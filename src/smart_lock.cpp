@@ -345,7 +345,13 @@ bool SmartLock::service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobo
     if(j.find("lock_index") != j.end())
     {
         uint32_t lock_index = j["lock_index"];
-            to_unlock_serials.clear();
+        if((lock_index == 0) || (lock_index >= (1 << this->door_num)))
+        {
+            ROS_ERROR("%s: parameter error: lock_index: %d", __func__, lock_index);
+            status.success = false;
+            return false;
+        }
+        to_unlock_serials.clear();
         for(uint8_t i = 0; i < 32; i++)
         {
             if(lock_index & (1 << i))
