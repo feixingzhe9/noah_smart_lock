@@ -349,7 +349,7 @@ bool SmartLock::service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobo
         {
             ROS_ERROR("%s: parameter error: lock_index: %d", __func__, lock_index);
             status.success = false;
-            return false;
+            return true;
         }
         to_unlock_serials.clear();
         for(uint8_t i = 0; i < 32; i++)
