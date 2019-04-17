@@ -19,9 +19,9 @@ void sigintHandler(int sig)
 
 void get_param(void)
 {
-    if(ros::param::has("/smart_lock/door_num"))
+    if(ros::param::has("/door_num"))
     {
-        ros::param::get("/smart_lock/door_num",door_num);
+        ros::param::get("/door_num",door_num);
         if(door_num == 0)
         {
             ROS_ERROR("get door num: %d, but door number CAN NOT be 0 ! using default value: 1", door_num);
@@ -34,7 +34,7 @@ void get_param(void)
     }
     else
     {
-        ROS_ERROR("can not find param: /smart_lock/door_num !  door number using default value: 1");
+        ROS_ERROR("can not find param: /door_num !  door number using default value: 1");
         door_num = 1;//default value
     }
 }
