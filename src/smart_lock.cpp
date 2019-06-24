@@ -216,6 +216,29 @@ int SmartLock::get_lock_version(void)
     return error;
 }
 
+void SmartLock::rcv_from_driver_rfid_callback(const std_msgs::UInt16MultiArray::ConstPtr &info)
+{
+    if(info->data.size() == 2)
+    {
+        uint8_t dev_id = info->data[0];
+        uint16_t rfid_int = info->data[1];
+        std_msgs::String rfid;
+        rfid.data.resize(RFID_LEN);
+        rfid.data.clear();
+        rfid.data = this->build_rfid(rfid_int);
+
+        ROS_WARN("from driver rfid: receive RFID: %d, dev_id: %d", rfid_int, dev_id);
+        if(dev_id == 0x0e)   //0x0e
+        {
+            this->report_rfid(rfid);
+        }
+        else if(dev_id < 0x0e)
+        {
+            this->report_cabinet_rfid(dev_id, rfid);
+        }
+    }
+}
+
 void SmartLock::report_rfid(std_msgs::String rfid)
 {
     json j;
@@ -235,6 +258,24 @@ void SmartLock::report_rfid(std_msgs::String rfid)
 }
 
 
+void SmartLock::report_cabinet_rfid(uint8_t cabinet_num, std_msgs::String rfid)
+{
+    json j;
+    j.clear();
+    j =
+    {
+        {"rfid", rfid.data.c_str()},
+        {"cabinet_num", cabinet_num},
+    };
+    std_msgs::String pub_json_msg;
+    std::stringstream ss;
+    ss.clear();
+    ss << j;
+    pub_json_msg.data.clear();
+    pub_json_msg.data = ss.str();
+    report_cabinet_rfid_pub.publish(pub_json_msg);
+
+}
 
 void SmartLock::report_password(std_msgs::String password)
 {
@@ -575,6 +616,10 @@ void SmartLock::rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr 
                 ROS_INFO("rfid int data :%d",rfid_int);
                 rfid.data = this->build_rfid(rfid_int);
                 ROS_WARN("receive RFID: %s",rfid.data.c_str());
+                if(rfid.data.c_str() == super_rfid.c_str())
+                {
+                    ROS_INFO("get super rfid");
+                }
                 this->report_rfid(rfid);
             }
             break;

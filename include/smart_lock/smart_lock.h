@@ -7,6 +7,7 @@
 #include <mrobot_msgs/vci_can.h>
 #include <mrobot_srvs/JString.h>
 #include <roscan/can_long_frame.h>
+#include "std_msgs/UInt16MultiArray.h"
 #include <semaphore.h>
 
 using json = nlohmann::json;
@@ -66,11 +67,13 @@ class SmartLock
         SmartLock(uint8_t num)
         {
             sub_from_can_node = n.subscribe("can_to_smart_lock", 1000, &SmartLock::rcv_from_can_node_callback, this);
+            sub_from_driver_rfid = n.subscribe("/driver_rfid/pub_info", 1000, &SmartLock::rcv_from_driver_rfid_callback, this);
 
             pub_to_can_node = n.advertise<mrobot_msgs::vci_can>("smart_lock_to_can", 1000);
             locks_status_pub = n.advertise<std_msgs::UInt8MultiArray>("smartlock/locks_state", 10);
             report_pwd_pub = n.advertise<std_msgs::String>("smartlock/report_password", 10);
             report_rfid_pub = n.advertise<std_msgs::String>("smartlock/report_rfid", 10);
+            report_cabinet_rfid_pub = n.advertise<std_msgs::String>("smartlock/report_cabinet_rfid", 10);
             report_qr_code_pub = n.advertise<std_msgs::String>("smartlock/report_qr_code", 10);
 
             update_super_admin = n.advertiseService("smartlock/update_super_admin", &SmartLock::service_update_super_admin, this);
@@ -91,6 +94,7 @@ class SmartLock
         int get_doors_state(void);
 
         void report_rfid(std_msgs::String rfid);
+        void report_cabinet_rfid(uint8_t cabinet_num, std_msgs::String rfid);
         void report_password(std_msgs::String password);
         void report_qr_code(uint8_t index, std_msgs::String qr_code);
 
@@ -99,12 +103,14 @@ class SmartLock
     private:
         ros::NodeHandle n;
         ros::Subscriber sub_from_can_node;
+        ros::Subscriber sub_from_driver_rfid;
 
         ros::Publisher pub_to_can_node;
 
         ros::Publisher locks_status_pub;
         ros::Publisher report_pwd_pub;
         ros::Publisher report_rfid_pub;
+        ros::Publisher report_cabinet_rfid_pub;
         ros::Publisher report_qr_code_pub;
 
         ros::ServiceServer update_super_admin;
@@ -121,6 +127,7 @@ class SmartLock
         sem_t super_admin_sem;
 
         void rcv_from_can_node_callback(const mrobot_msgs::vci_can::ConstPtr &c_msg);
+        void rcv_from_driver_rfid_callback(const std_msgs::UInt16MultiArray::ConstPtr &info);
 
         bool service_update_super_admin(mrobot_srvs::JString::Request  &ctrl, mrobot_srvs::JString::Response &status);
         bool service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobot_srvs::JString::Response &status);
