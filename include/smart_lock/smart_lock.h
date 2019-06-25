@@ -90,7 +90,7 @@ class SmartLock
         int get_lock_version(void);
         int set_super_pw(std::string super_pw);
         int set_super_rfid(std::string super_rfid);
-        int beeper_ctrl(uint8_t times, uint8_t duration, uint8_t interval_time, uint8_t freqency);
+        int beeper_ctrl(uint8_t times, uint16_t duration, uint16_t interval_time, uint8_t freqency);
         int get_doors_state(void);
 
         void report_rfid(std_msgs::String rfid);

@@ -75,6 +75,10 @@ int main(int argc, char **argv)
                 smart_lock->set_super_rfid(super_rfid);
                 is_need_update_rfid_pw = false;
                 time_cnt = 0;
+
+
+
+                smart_lock->beeper_ctrl(1, 100, 0, 0);
             }
             time_cnt++;
         }

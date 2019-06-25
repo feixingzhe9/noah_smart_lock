@@ -72,7 +72,7 @@ int SmartLock::unlock(void)     // done
     return error;
 }
 
-int SmartLock::beeper_ctrl(uint8_t times, uint8_t duration, uint8_t interval_time, uint8_t frequency)
+int SmartLock::beeper_ctrl(uint8_t times, uint16_t duration, uint16_t interval_time, uint8_t cmd)
 {
     int error = -1;
     ROS_WARN("start to ctrl beeper ");
@@ -93,9 +93,10 @@ int SmartLock::beeper_ctrl(uint8_t times, uint8_t duration, uint8_t interval_tim
 
     can_msg.Data[0] = 0x00;
     can_msg.Data[1]  = times;
-    can_msg.Data[2]  = duration;
-    can_msg.Data[3]  = interval_time;
-    can_msg.Data[4]  = frequency;
+    can_msg.Data[2]  = duration / 20;
+    can_msg.Data[3]  = interval_time / 20;
+    ROS_INFO("duration: %d, interval_time: %d", can_msg.Data[2], can_msg.Data[3]);
+    can_msg.Data[4]  = cmd;
 
     this->pub_to_can_node.publish(can_msg);
 
@@ -231,10 +232,12 @@ void SmartLock::rcv_from_driver_rfid_callback(const std_msgs::UInt16MultiArray::
         if(dev_id == 0x0e)   //0x0e
         {
             this->report_rfid(rfid);
+            this->beeper_ctrl(1, 60, 0, 0);
         }
         else if(dev_id < 0x0e)
         {
             this->report_cabinet_rfid(dev_id, rfid);
+            this->beeper_ctrl(1, 100, 0, 0);
         }
     }
 }
@@ -402,6 +405,7 @@ bool SmartLock::service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobo
             }
         }
         this->unlock();
+        this->beeper_ctrl(1, 500, 0, 0);
     }
 
 
