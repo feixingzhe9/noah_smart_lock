@@ -232,12 +232,26 @@ void SmartLock::rcv_from_driver_rfid_callback(const std_msgs::UInt16MultiArray::
         if(dev_id == 0x0e)   //0x0e
         {
             this->report_rfid(rfid);
-            this->beeper_ctrl(1, 60, 0, 0);
+            if(rfid.data == super_rfid)
+            {
+                this->unlock();
+                to_unlock_serials.clear();
+                for (uint8_t i = 0; i < 8; i++)
+                {
+                    to_unlock_serials.push_back(i + 1);
+                }
+            this->beeper_ctrl(1, 60, 60, 0);
+            this->beeper_ctrl(1, 500, 100, 0);
+            }
+            else
+            {
+                this->beeper_ctrl(1, 60, 60, 0);
+            }
         }
         else if(dev_id < 0x0e)
         {
             this->report_cabinet_rfid(dev_id, rfid);
-            this->beeper_ctrl(1, 100, 0, 0);
+            this->beeper_ctrl(1, 100, 100, 0);
         }
     }
 }
@@ -405,7 +419,7 @@ bool SmartLock::service_unlock(mrobot_srvs::JString::Request  &lock_index, mrobo
             }
         }
         this->unlock();
-        this->beeper_ctrl(1, 500, 0, 0);
+        this->beeper_ctrl(1, 500, 100, 0);
     }
 
 
