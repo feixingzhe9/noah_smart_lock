@@ -245,13 +245,24 @@ void SmartLock::rcv_from_driver_rfid_callback(const std_msgs::UInt16MultiArray::
             }
             else
             {
-                this->beeper_ctrl(1, 60, 60, 0);
+                this->beeper_ctrl(1, 250, 150, 0);
             }
         }
         else if(dev_id < 0x0e)
         {
-            this->report_cabinet_rfid(dev_id, rfid);
-            this->beeper_ctrl(1, 100, 100, 0);
+            this->report_cabinet_rfid(dev_id, 0, rfid);
+            this->beeper_ctrl(1, 250, 150, 0);
+        }
+    }
+    else if(info->data.size() == 1)
+    {
+        uint8_t dev_id = info->data[0];
+        std_msgs::String rfid;
+        if(dev_id < 0x0e)
+        {
+            ROS_INFO("rfid: %d is depart", dev_id);
+            this->report_cabinet_rfid(dev_id, 1, rfid);
+            this->beeper_ctrl(3, 60, 60, 0);
         }
     }
 }
@@ -275,15 +286,27 @@ void SmartLock::report_rfid(std_msgs::String rfid)
 }
 
 
-void SmartLock::report_cabinet_rfid(uint8_t cabinet_num, std_msgs::String rfid)
+void SmartLock::report_cabinet_rfid(uint8_t cabinet_num, uint8_t type, std_msgs::String rfid)
 {
     json j;
     j.clear();
-    j =
+    if(type == 0)
     {
-        {"rfid", rfid.data.c_str()},
-        {"cabinet_num", cabinet_num},
-    };
+        j =
+        {
+            {"pub_name", "rfid_info"},
+            {"rfid", rfid.data.c_str()},
+            {"cabinet_num", cabinet_num},
+        };
+    }
+    else if(type == 1)
+    {
+        j =
+        {
+            {"pub_name", "rfid_depart"},
+            {"cabinet_num", cabinet_num},
+        };
+    }
     std_msgs::String pub_json_msg;
     std::stringstream ss;
     ss.clear();

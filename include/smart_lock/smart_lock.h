@@ -94,7 +94,7 @@ class SmartLock
         int get_doors_state(void);
 
         void report_rfid(std_msgs::String rfid);
-        void report_cabinet_rfid(uint8_t cabinet_num, std_msgs::String rfid);
+        void report_cabinet_rfid(uint8_t cabinet_num, uint8_t type, std_msgs::String rfid);
         void report_password(std_msgs::String password);
         void report_qr_code(uint8_t index, std_msgs::String qr_code);
 
