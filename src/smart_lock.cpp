@@ -296,7 +296,7 @@ void SmartLock::report_cabinet_rfid(uint8_t cabinet_num, uint8_t type, std_msgs:
         {
             {"pub_name", "rfid_info"},
             {"rfid", rfid.data.c_str()},
-            {"cabinet_num", cabinet_num},
+            {"cabinet_id", cabinet_num},
         };
     }
     else if(type == 1)
@@ -304,7 +304,7 @@ void SmartLock::report_cabinet_rfid(uint8_t cabinet_num, uint8_t type, std_msgs:
         j =
         {
             {"pub_name", "rfid_depart"},
-            {"cabinet_num", cabinet_num},
+            {"cabinet_id", cabinet_num},
         };
     }
     std_msgs::String pub_json_msg;

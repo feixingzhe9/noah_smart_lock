@@ -7,7 +7,7 @@
 #include <smart_lock.h>
 
 bool is_need_update_rfid_pw = true;
-int door_num;
+uint8_t door_num;
 
 class SmartLock;
 
@@ -17,34 +17,69 @@ void sigintHandler(int sig)
     ros::shutdown();
 }
 
-void get_param(void)
+
+const std::string PRODUCT_MODEL_CABINET = "cabinet";
+uint8_t get_door_num(void)
 {
-    if(ros::param::has("/door_num"))
+    if(ros::param::has("/product_model"))
     {
-        ros::param::get("/door_num",door_num);
-        if(door_num == 0)
+        std::string product_model;
+        ros::param::get("/product_model", product_model);
+        if(product_model.length() > PRODUCT_MODEL_CABINET.length())
         {
-            ROS_ERROR("get door num: %d, but door number CAN NOT be 0 ! using default value: 1", door_num);
-            door_num = 1;
+            int ret = product_model.compare(0, PRODUCT_MODEL_CABINET.length(), PRODUCT_MODEL_CABINET, 0, PRODUCT_MODEL_CABINET.length());
+            if(ret == 0)
+            {
+                std::string product_model_tmp = product_model;
+                if(product_model.length() - PRODUCT_MODEL_CABINET.length() - 1 > 0)
+                {
+                    ROS_INFO("from cabinet param: %s", product_model_tmp.substr(PRODUCT_MODEL_CABINET.length() + 1, product_model.length() - PRODUCT_MODEL_CABINET.length() - 1).c_str());
+                    uint8_t num = atoi(product_model_tmp.substr(PRODUCT_MODEL_CABINET.length() + 1, product_model.length() - PRODUCT_MODEL_CABINET.length() - 1).c_str());
+                    if(num > 0)
+                    {
+                        return num;
+                    }
+                    else
+                    {
+                        ROS_ERROR("parameter error: %s", product_model.c_str());
+                        return 0;
+                    }
+                }
+                else
+                {
+                    ROS_ERROR("parameter error: %s", product_model.c_str());
+                    return 0;
+                }
+            }
+            else
+            {
+                ROS_WARN("do not get PRODUCT_MODEL_CABINET, so cabinet num is 0");
+                return 0;
+            }
         }
         else
         {
-            ROS_INFO("get door num: %d",door_num);
+            ROS_ERROR("parameter error: %s", product_model.c_str());
+            return 0;
         }
     }
     else
     {
-        ROS_ERROR("can not find param: /door_num !  door number using default value: 1");
-        door_num = 1;//default value
+        ROS_ERROR("do not have parameter of product_model");
+        return 0;
     }
+
+    return 0;
 }
+
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "smart_lock_node");
-    get_param();
+    door_num = get_door_num();
+    ROS_INFO("get door num %d", door_num);
 
-    SmartLock *smart_lock = new SmartLock((uint8_t)door_num);
+    SmartLock *smart_lock = new SmartLock(door_num);
     ros::Rate loop_rate(20);
     uint32_t cnt = 0;
     smart_lock->param_init();
