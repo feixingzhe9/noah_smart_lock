@@ -267,6 +267,94 @@ void SmartLock::rcv_from_driver_rfid_callback(const std_msgs::UInt16MultiArray::
     }
 }
 
+
+
+void SmartLock::driver_rfid_info_callback(const std_msgs::String::ConstPtr &msg)
+{
+    auto j = json::parse(msg->data.c_str());
+    std::string j_str = j.dump();
+    ROS_INFO("%s",j_str.data());
+
+
+    if(j.find("rfid_type") == j.end())
+    {
+        ROS_ERROR("%s:do not find  [rfid_type] in json msg  !", __func__);
+        return;
+    }
+
+    if(j.find("index") == j.end())
+    {
+        ROS_ERROR("%s:do not find  [index] in json msg  !", __func__);
+        return;
+    }
+
+    if(j.find("info") == j.end())
+    {
+        ROS_ERROR("%s:do not find  [info] in json msg  !", __func__);
+        return;
+    }
+
+    if(j.find("act") == j.end())
+    {
+        ROS_ERROR("%s:do not find  [act] in json msg  !", __func__);
+        return;
+    }
+
+
+    std::string rfid_type_str = j["rfid_type"];
+    std::string act_str = j["act"];
+    uint32_t rfid_info = j["info"];
+    uint8_t index = j["index"];
+
+    std_msgs::String rfid_info_str;
+    rfid_info_str.data = this->build_rfid(rfid_info);
+
+    if(rfid_type_str == "cabinet_detection")
+    {
+        if(act_str == "depart")
+        {
+            this->report_cabinet_rfid(index, 1, rfid_info_str);
+            return;
+        }
+        else if(act_str == "arrive")
+        {
+            this->report_cabinet_rfid(index, 0, rfid_info_str);
+            return;
+        }
+    }
+    else if(rfid_type_str == "auth")
+    {
+        std_msgs::String rfid_tmp;
+        rfid_tmp.data = this->build_rfid(rfid_info);
+        this->report_rfid(rfid_tmp);
+        return;
+    }
+    else if(rfid_type_str == "dst_src_info")
+    {
+        if(j.find("dst_info") == j.end())
+        {
+            ROS_ERROR("%s:do not find  [dst_info] in json msg  !", __func__);
+            return;
+        }
+        if(j.find("src_info") == j.end())
+        {
+            ROS_ERROR("%s:do not find  [src_info] in json msg  !", __func__);
+            return;
+        }
+
+        uint32_t dst = j["dst_info"];
+        uint32_t src = j["src_info"];
+        std::string dst_str = this->build_rfid(dst);
+        std::string src_str = this->build_rfid(src);
+        this->report_dst_src_info(index, rfid_info_str.data, dst_str, src_str);
+        return;
+    }
+
+   ROS_ERROR("%s: ERROR, please check json string msg", __func__);
+   return;
+}
+
+
 void SmartLock::report_rfid(std_msgs::String rfid)
 {
     json j;
@@ -316,6 +404,30 @@ void SmartLock::report_cabinet_rfid(uint8_t cabinet_num, uint8_t type, std_msgs:
     report_cabinet_rfid_pub.publish(pub_json_msg);
 
 }
+
+
+
+void SmartLock::report_dst_src_info(uint8_t index, std::string rfid_info, std::string dst, std::string src)
+{
+    json j;
+    j.clear();
+    j =
+    {
+        {"info", "rfid_info"},
+        {"index", index},
+        {"dst", dst.c_str()},
+        {"src", src.c_str()},
+    };
+    std_msgs::String pub_json_msg;
+    std::stringstream ss;
+    ss.clear();
+    ss << j;
+    pub_json_msg.data.clear();
+    pub_json_msg.data = ss.str();
+    report_dst_src_info_pub.publish(pub_json_msg);
+
+}
+
 
 void SmartLock::report_password(std_msgs::String password)
 {
