@@ -68,7 +68,7 @@ class SmartLock
         {
             sub_from_can_node = n.subscribe("can_to_smart_lock", 1000, &SmartLock::rcv_from_can_node_callback, this);
             sub_from_driver_rfid = n.subscribe("/driver_rfid/pub_info", 1000, &SmartLock::rcv_from_driver_rfid_callback, this);
-            sub_driver_rfid_info = n.subscribe("/report_driver_rfid_info", 10, &SmartLock::driver_rfid_info_callback, this);
+            sub_driver_rfid_info = n.subscribe("/driver_rfid/report_info", 10, &SmartLock::driver_rfid_info_callback, this);
 
             pub_to_can_node = n.advertise<mrobot_msgs::vci_can>("smart_lock_to_can", 1000);
             locks_status_pub = n.advertise<std_msgs::UInt8MultiArray>("smartlock/locks_state", 10);
@@ -99,7 +99,7 @@ class SmartLock
         void report_rfid(std_msgs::String rfid);
         void report_cabinet_rfid(uint8_t cabinet_num, uint8_t type, std_msgs::String rfid);
         void report_password(std_msgs::String password);
-        void report_dst_src_info(uint8_t index, std::string rfid_info, std::string dst, std::string src);
+        void report_dst_src_info(uint8_t index, uint8_t act, std::string rfid_info, std::string dst, std::string src);
         void report_qr_code(uint8_t index, std_msgs::String qr_code);
 
 

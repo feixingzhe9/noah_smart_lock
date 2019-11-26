@@ -240,8 +240,8 @@ void SmartLock::rcv_from_driver_rfid_callback(const std_msgs::UInt16MultiArray::
                 {
                     to_unlock_serials.push_back(i + 1);
                 }
-            this->beeper_ctrl(1, 60, 60, 0);
-            this->beeper_ctrl(1, 500, 100, 0);
+                this->beeper_ctrl(1, 60, 60, 0);
+                this->beeper_ctrl(1, 500, 100, 0);
             }
             else
             {
@@ -314,11 +314,13 @@ void SmartLock::driver_rfid_info_callback(const std_msgs::String::ConstPtr &msg)
         if(act_str == "depart")
         {
             this->report_cabinet_rfid(index, 1, rfid_info_str);
+            this->beeper_ctrl(2, 60, 60, 0);
             return;
         }
         else if(act_str == "arrive")
         {
             this->report_cabinet_rfid(index, 0, rfid_info_str);
+            this->beeper_ctrl(1, 250, 150, 0);
             return;
         }
     }
@@ -326,6 +328,21 @@ void SmartLock::driver_rfid_info_callback(const std_msgs::String::ConstPtr &msg)
     {
         std_msgs::String rfid_tmp;
         rfid_tmp.data = this->build_rfid(rfid_info);
+        if(rfid_tmp.data == super_rfid)
+        {
+            to_unlock_serials.clear();
+            for (uint8_t i = 0; i < 8; i++)
+            {
+                to_unlock_serials.push_back(i + 1);
+            }
+            this->unlock();
+            this->beeper_ctrl(1, 60, 60, 0);
+            this->beeper_ctrl(1, 500, 100, 0);
+        }
+        else
+        {
+            this->beeper_ctrl(1, 250, 150, 0);
+        }
         this->report_rfid(rfid_tmp);
         return;
     }
@@ -346,8 +363,19 @@ void SmartLock::driver_rfid_info_callback(const std_msgs::String::ConstPtr &msg)
         uint32_t src = j["src_info"];
         std::string dst_str = this->build_rfid(dst);
         std::string src_str = this->build_rfid(src);
-        this->report_dst_src_info(index, rfid_info_str.data, dst_str, src_str);
-        return;
+
+        if(act_str == "depart")
+        {
+            this->report_dst_src_info(index, 1, rfid_info_str.data, dst_str, src_str);
+            this->beeper_ctrl(2, 60, 60, 0);
+            return;
+        }
+        else if(act_str == "arrive")
+        {
+            this->report_dst_src_info(index, 0, rfid_info_str.data, dst_str, src_str);
+            this->beeper_ctrl(1, 250, 150, 0);
+            return;
+        }
     }
 
    ROS_ERROR("%s: ERROR, please check json string msg", __func__);
@@ -407,17 +435,29 @@ void SmartLock::report_cabinet_rfid(uint8_t cabinet_num, uint8_t type, std_msgs:
 
 
 
-void SmartLock::report_dst_src_info(uint8_t index, std::string rfid_info, std::string dst, std::string src)
+void SmartLock::report_dst_src_info(uint8_t index, uint8_t type, std::string rfid_info, std::string dst, std::string src)
 {
     json j;
-    j.clear();
-    j =
+
+    if(type == 0)
     {
-        {"info", "rfid_info"},
-        {"index", index},
-        {"dst", dst.c_str()},
-        {"src", src.c_str()},
-    };
+        j =
+        {
+            {"pub_name", "rfid_info"},
+            {"index", index},
+            {"dst", dst.c_str()},
+            {"src", src.c_str()},
+        };
+    }
+    else if(type == 1)
+    {
+        j =
+        {
+            {"pub_name", "rfid_depart"},
+            {"index", index},
+        };
+    }
+
     std_msgs::String pub_json_msg;
     std::stringstream ss;
     ss.clear();
